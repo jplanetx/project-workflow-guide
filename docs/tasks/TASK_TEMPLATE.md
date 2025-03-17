@@ -1,15 +1,42 @@
-# WORKITEM-XXX: [Task Title]
+# [Task Title]
 
 ## Task Details
-- **Component:** [Component Name]
+- **Issue:** #[Number]
+- **URL:** [GitHub Issue URL]
+- **Created:** [Date]
 - **Priority:** [High/Medium/Low]
-- **Description:** [Brief description of the task]
+- **Labels:** [List of GitHub labels]
+- **Assignee:** [GitHub username]
+
+## Description
+[Brief description of the task]
 
 ## Implementation Notes
-- Describe your planned approach, key decisions, and any challenges you anticipate.
+- [ ] List planned implementation steps
+- [ ] Document key technical decisions
+- [ ] Note potential challenges and solutions
+
+## Dependencies
+- List related issues: #[issue number]
+- List required tasks to complete first
+- Note any external dependencies
 
 ## Testing Steps
-- Outline the steps required to test the implementation, including unit and integration tests if applicable.
+- [ ] Unit tests implemented/updated
+- [ ] Integration tests verified
+- [ ] Manual testing completed
+- [ ] Edge cases covered
 
 ## Verification Results
-- Record the outcomes of your testing and any verification checks performed.
+- Record testing outcomes
+- Document any issues found and resolutions
+- Note performance impacts if any
+
+## Related Pull Requests
+- [ ] PR #[number]: [description]
+- [ ] PR #[number]: [description]
+
+## Additional Notes
+- Add any relevant context or implementation details
+- Document key decisions or trade-offs made
+- Note any configuration changes required
