@@ -25,19 +25,25 @@ The RAG (Retrieval-Augmented Generation) AI Assistant provides intelligent answe
    ./setup_rag.sh
    ```
 
-2. Index your project documents:
+2. Set up your OpenAI API key:
+   ```
+   # Create a .env file in the project root
+   OPENAI_API_KEY=your_api_key_here
+   ```
+
+3. Index your project documents:
    ```bash
    python rag_agent/index_documents.py
    ```
 
-3. Start the chat interface:
+4. Start the chat interface:
    ```bash
    python rag_agent/chat_rag.py
    ```
 
 ### How It Works
 
-1. The AI assistant uses **Mem0** for knowledge storage and retrieval.
+1. The AI assistant uses **ChromaDB** with sentence embeddings for knowledge storage and retrieval.
 2. When you ask a question, it searches for the most relevant documents in your project.
 3. It then combines the retrieved information with AI capabilities to generate accurate answers.
 4. All sources are cited so you know where the information comes from.

@@ -12,33 +12,62 @@ import logging
 from datetime import datetime
 from typing import List, Dict, Any
 
+# Try to install required packages if they're missing
+print("Checking and installing required dependencies...")
+try:
+    # Attempt to install dependencies automatically
+    import subprocess
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "rich"])
+    print("Dependencies installed successfully.")
+except Exception as e:
+    print(f"Warning: Could not automatically install dependencies: {e}")
+    print("Please install rich manually: pip install rich")
+
 try:
     from rich.console import Console
     from rich.markdown import Markdown
     from rich.panel import Panel
     from rich.progress import Progress
-except ImportError:
-    print("Error: Rich is not installed. Please run setup_rag.bat or setup_rag.sh first.")
-    sys.exit(1)
+except ImportError as e:
+    print(f"Error importing rich: {e}")
+    print("Please install rich manually: pip install rich")
+    # Create fallback functions if rich is not available
+    class FallbackConsole:
+        def print(self, text, **kwargs):
+            print(text)
+        def input(self, prompt, **kwargs):
+            return input(prompt)
+    Console = FallbackConsole
+    Panel = lambda text, **kwargs: f"\n--- {kwargs.get('title', '')} ---\n{text}\n-----------"
+    Markdown = lambda text: text
+    Progress = None
 
 # Add parent directory to path for local imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 try:
     from query_engine import ask_rag_agent
-except ImportError:
-    print("Error: Could not import query_engine. Make sure all files are in place.")
+except ImportError as e:
+    print(f"Error importing query_engine: {e}")
+    print("Make sure query_engine.py is in the same directory and all dependencies are installed.")
     sys.exit(1)
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(os.path.join("logs", f"rag_chat_{datetime.now().strftime('%Y%m%d')}.log")),
-        logging.StreamHandler(sys.stderr)  # Log to stderr to avoid interfering with the UI
-    ]
-)
+try:
+    os.makedirs("logs", exist_ok=True)
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(os.path.join("logs", f"rag_chat_{datetime.now().strftime('%Y%m%d')}.log")),
+            logging.StreamHandler(sys.stderr)  # Log to stderr to avoid interfering with the UI
+        ]
+    )
+except Exception as e:
+    print(f"Warning: Could not set up logging: {e}")
+    # Fallback to simple logging
+    logging.basicConfig(level=logging.INFO)
+
 logger = logging.getLogger("rag_chat")
 
 # Initialize Rich console
@@ -114,72 +143,89 @@ def format_sources(sources: List[Dict[str, str]]) -> str:
 
 def main():
     """Main chat loop for the RAG assistant."""
-    clear_screen()
-    display_welcome_message()
-    
-    show_debug = False
-    continue_chat = True
-    
-    while continue_chat:
-        try:
-            # Get user input
-            user_input = console.input("\n[bold green]You:[/bold green] ")
-            
-            # Skip empty inputs
-            if not user_input.strip():
-                continue
-            
-            # Handle commands
-            if user_input.startswith('/'):
-                continue_chat, show_debug = handle_command(user_input, show_debug)
-                continue
-            
-            # Process the query
-            logger.info(f"User query: {user_input}")
-            
-            # Show thinking animation
-            with Progress(transient=True) as progress:
-                task = progress.add_task("[cyan]Thinking...", total=None)
-                
-                # Process the query in the background
-                response = ask_rag_agent(user_input)
-                
-                # Make sure the animation shows for at least a moment
-                time.sleep(0.5)
-            
-            # Split response into answer and sources
-            parts = response.split("\nSources:")
-            answer = parts[0]
-            sources_text = "\nSources:" + parts[1] if len(parts) > 1 else ""
-            
-            # Display the answer
-            console.print("\n[bold blue]AI:[/bold blue]", end=" ")
-            console.print(Markdown(answer.strip()))
-            
-            # Display sources if available
-            if sources_text and not show_debug:
-                # Extract sources in a cleaner format for display
-                source_lines = [line.strip() for line in sources_text.split('\n') if line.strip().startswith('-')]
-                for line in source_lines:
-                    console.print(f"[dim]{line}[/dim]")
-            
-            # Show debug information if enabled
-            if show_debug and sources_text:
-                console.print(Markdown(sources_text))
-                
-                # Show timing information if available
-                if "[Response generated in" in response:
-                    timing = response.split("[Response generated in")[1].split("]")[0].strip()
-                    console.print(f"[dim]Response time: {timing} seconds[/dim]")
+    try:
+        clear_screen()
+        display_welcome_message()
         
-        except KeyboardInterrupt:
-            console.print("\n[yellow]Interrupted. Type /exit to quit.[/yellow]")
+        show_debug = False
+        continue_chat = True
         
-        except Exception as e:
-            logger.error(f"Error in chat loop: {e}")
-            console.print(f"\n[bold red]Error:[/bold red] {str(e)}")
-    
-    return 0
+        while continue_chat:
+            try:
+                # Get user input
+                user_input = console.input("\n[bold green]You:[/bold green] ")
+                
+                # Skip empty inputs
+                if not user_input.strip():
+                    continue
+                
+                # Handle commands
+                if user_input.startswith('/'):
+                    continue_chat, show_debug = handle_command(user_input, show_debug)
+                    continue
+                
+                # Process the query
+                logger.info(f"User query: {user_input}")
+                
+                # Show thinking animation
+                if Progress:
+                    with Progress(transient=True) as progress:
+                        task = progress.add_task("[cyan]Thinking...", total=None)
+                        
+                        # Process the query in the background
+                        response = ask_rag_agent(user_input)
+                        
+                        # Make sure the animation shows for at least a moment
+                        time.sleep(0.5)
+                else:
+                    # Fallback if rich Progress is not available
+                    print("Thinking...")
+                    response = ask_rag_agent(user_input)
+                
+                # Split response into answer and sources
+                parts = response.split("\nSources:")
+                answer = parts[0]
+                sources_text = "\nSources:" + parts[1] if len(parts) > 1 else ""
+                
+                # Display the answer
+                console.print("\n[bold blue]AI:[/bold blue]", end=" ")
+                
+                # Use Markdown if available, otherwise plain text
+                if isinstance(Markdown, type):
+                    console.print(Markdown(answer.strip()))
+                else:
+                    console.print(answer.strip())
+                
+                # Display sources if available
+                if sources_text and not show_debug:
+                    # Extract sources in a cleaner format for display
+                    source_lines = [line.strip() for line in sources_text.split('\n') if line.strip().startswith('-')]
+                    for line in source_lines:
+                        console.print(f"[dim]{line}[/dim]")
+                
+                # Show debug information if enabled
+                if show_debug and sources_text:
+                    if isinstance(Markdown, type):
+                        console.print(Markdown(sources_text))
+                    else:
+                        console.print(sources_text)
+                    
+                    # Show timing information if available
+                    if "[Response generated in" in response:
+                        timing = response.split("[Response generated in")[1].split("]")[0].strip()
+                        console.print(f"[dim]Response time: {timing} seconds[/dim]")
+            
+            except KeyboardInterrupt:
+                console.print("\n[yellow]Interrupted. Type /exit to quit.[/yellow]")
+            
+            except Exception as e:
+                logger.error(f"Error in chat loop: {e}")
+                console.print(f"\n[bold red]Error:[/bold red] {str(e)}")
+        
+        return 0
+    except Exception as e:
+        print(f"Critical error in main function: {e}")
+        return 1
 
 if __name__ == "__main__":
     sys.exit(main())

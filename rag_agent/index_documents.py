@@ -2,7 +2,7 @@
 """
 Document Ingestion for RAG AI Assistant
 This script loads documents from docs/, logs/, and scripts/ folders
-and stores them in Mem0 for knowledge retrieval.
+and stores them in ChromaDB for knowledge retrieval.
 """
 
 import os
@@ -10,23 +10,49 @@ import sys
 import glob
 import logging
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
+# Try to install required packages if they're missing
+print("Checking and installing required dependencies...")
 try:
-    from mem0 import Mem0
-except ImportError:
-    print("Error: Mem0 is not installed. Please run setup_rag.bat or setup_rag.sh first.")
+    # Attempt to install dependencies automatically
+    import subprocess
+    subprocess.check_call([sys.executable, "-m", "pip", "install", 
+                          "chromadb", "sentence-transformers", "langchain"])
+    print("Dependencies installed successfully.")
+except Exception as e:
+    print(f"Warning: Could not automatically install dependencies: {e}")
+    print("Please manually install the required packages:")
+    print("pip install chromadb sentence-transformers langchain")
+
+# Now try to import the required packages
+try:
+    import chromadb
+    from chromadb.utils import embedding_functions
+    from langchain.text_splitter import RecursiveCharacterTextSplitter
+    print("All required packages imported successfully.")
+except ImportError as e:
+    print(f"Error: Required dependency not available: {e}")
+    print("Please install the missing packages manually using:")
+    print("pip install chromadb sentence-transformers langchain")
     sys.exit(1)
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(os.path.join("logs", f"rag_indexing_{datetime.now().strftime('%Y%m%d')}.log")),
-        logging.StreamHandler()
-    ]
-)
+try:
+    os.makedirs("logs", exist_ok=True)
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(os.path.join("logs", f"rag_indexing_{datetime.now().strftime('%Y%m%d')}.log")),
+            logging.StreamHandler()
+        ]
+    )
+except Exception as e:
+    print(f"Warning: Could not set up logging: {e}")
+    # Fallback to simple logging
+    logging.basicConfig(level=logging.INFO)
+
 logger = logging.getLogger("rag_indexer")
 
 # Path to project root directory
@@ -37,8 +63,8 @@ DOCS_DIR = os.path.join(ROOT_DIR, "docs")
 LOGS_DIR = os.path.join(ROOT_DIR, "logs")
 SCRIPTS_DIR = os.path.join(ROOT_DIR, "scripts")
 
-# Path to Mem0 database
-MEM0_DB_PATH = os.path.join(ROOT_DIR, "rag_agent", "mem0_db")
+# Path to ChromaDB database
+CHROMA_DB_PATH = os.path.join(ROOT_DIR, "rag_agent", "chroma_db")
 
 def ensure_dir_exists(path: str) -> None:
     """Create directory if it doesn't exist."""
@@ -70,7 +96,7 @@ def gather_documents() -> List[Dict[str, Any]]:
             logger.debug(f"Processing document: {rel_path}")
             content = read_text_file(filepath)
             documents.append({
-                "text": content,
+                "content": content,
                 "metadata": {
                     "source": rel_path,
                     "type": "documentation",
@@ -87,7 +113,7 @@ def gather_documents() -> List[Dict[str, Any]]:
             logger.debug(f"Processing script: {rel_path}")
             content = read_text_file(filepath)
             documents.append({
-                "text": content,
+                "content": content,
                 "metadata": {
                     "source": rel_path,
                     "type": "script",
@@ -110,7 +136,7 @@ def gather_documents() -> List[Dict[str, Any]]:
         logger.debug(f"Processing log: {rel_path}")
         content = read_text_file(filepath)
         documents.append({
-            "text": content,
+            "content": content,
             "metadata": {
                 "source": rel_path,
                 "type": "log",
@@ -121,58 +147,117 @@ def gather_documents() -> List[Dict[str, Any]]:
     
     return documents
 
-def chunk_document(document: Dict[str, Any], chunk_size: int = 1000, overlap: int = 200) -> List[Dict[str, Any]]:
-    """Split a document into smaller chunks with overlap."""
-    text = document["text"]
-    if len(text) <= chunk_size:
-        return [document]
+def chunk_documents(documents: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Split documents into smaller chunks for better retrieval."""
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=200,
+        length_function=len,
+    )
     
-    chunks = []
-    for i in range(0, len(text), chunk_size - overlap):
-        chunk_text = text[i:i + chunk_size]
-        if len(chunk_text) < 100:  # Skip very small chunks
+    chunked_docs = []
+    
+    for doc in documents:
+        content = doc["content"]
+        metadata = doc["metadata"]
+        
+        # Skip tiny documents
+        if len(content) < 100:
+            chunked_docs.append(doc)
             continue
-            
-        chunk_doc = {
-            "text": chunk_text,
-            "metadata": {
-                **document["metadata"],
-                "chunk_index": i // (chunk_size - overlap),
-                "is_chunk": True
+        
+        # Split content into chunks
+        texts = text_splitter.split_text(content)
+        
+        # Create new document for each chunk
+        for i, chunk_text in enumerate(texts):
+            chunk_doc = {
+                "content": chunk_text,
+                "metadata": {
+                    **metadata,
+                    "chunk_index": i,
+                    "is_chunk": True,
+                    "chunk_count": len(texts)
+                }
             }
-        }
-        chunks.append(chunk_doc)
+            chunked_docs.append(chunk_doc)
     
-    return chunks
+    return chunked_docs
 
 def main():
-    """Index documents and store them in Mem0."""
+    """Index documents and store them in ChromaDB."""
     logger.info("Starting document indexing process...")
     
-    # Create Mem0 database directory if it doesn't exist
-    ensure_dir_exists(MEM0_DB_PATH)
+    # Create ChromaDB directory if it doesn't exist
+    ensure_dir_exists(CHROMA_DB_PATH)
     
     try:
-        # Initialize Mem0
-        logger.info(f"Initializing Mem0 at {MEM0_DB_PATH}")
-        mem = Mem0(persist_dir=MEM0_DB_PATH)
+        # Initialize sentence transformers embedding function
+        logger.info("Initializing embedding function")
+        print("Initializing sentence transformer embedding function...")
+        ef = embedding_functions.SentenceTransformerEmbeddingFunction(
+            model_name="all-MiniLM-L6-v2"
+        )
+        
+        # Initialize ChromaDB client
+        logger.info(f"Initializing ChromaDB at {CHROMA_DB_PATH}")
+        print(f"Initializing ChromaDB at {CHROMA_DB_PATH}...")
+        client = chromadb.PersistentClient(path=CHROMA_DB_PATH)
+        
+        # Create or get collection
+        collection = client.get_or_create_collection(
+            name="project_knowledge",
+            embedding_function=ef,
+            metadata={"description": "Project workflow knowledge base"}
+        )
         
         # Gather documents
+        print("Gathering documents from project directories...")
         documents = gather_documents()
         logger.info(f"Found {len(documents)} documents to index")
+        print(f"Found {len(documents)} documents to index")
         
-        # Chunk documents and flatten
-        chunked_docs = []
-        for doc in documents:
-            chunked_docs.extend(chunk_document(doc))
-        
+        # Chunk documents
+        print("Chunking documents for better retrieval...")
+        chunked_docs = chunk_documents(documents)
         logger.info(f"Created {len(chunked_docs)} chunks from {len(documents)} documents")
+        print(f"Created {len(chunked_docs)} chunks from {len(documents)} documents")
         
-        # Add documents to Mem0
-        mem.add_documents(chunked_docs)
+        # Clear existing documents (optional)
+        print("Clearing existing documents from the collection...")
+        collection.delete()
+        collection = client.get_or_create_collection(
+            name="project_knowledge",
+            embedding_function=ef,
+            metadata={"description": "Project workflow knowledge base"}
+        )
         
-        logger.info(f"Successfully indexed {len(chunked_docs)} document chunks in Mem0")
-        print(f"✅ Indexed {len(documents)} documents ({len(chunked_docs)} chunks) in Mem0.")
+        # Add documents to ChromaDB
+        ids = [f"doc_{i}" for i in range(len(chunked_docs))]
+        texts = [doc["content"] for doc in chunked_docs]
+        metadatas = [doc["metadata"] for doc in chunked_docs]
+        
+        # Add in batches to avoid memory issues
+        batch_size = 100
+        total_batches = (len(ids) + batch_size - 1) // batch_size
+        
+        print(f"Adding {len(chunked_docs)} document chunks to ChromaDB in {total_batches} batches...")
+        for i in range(0, len(ids), batch_size):
+            end_idx = min(i + batch_size, len(ids))
+            batch_ids = ids[i:end_idx]
+            batch_texts = texts[i:end_idx]
+            batch_metadatas = metadatas[i:end_idx]
+            
+            print(f"Processing batch {(i // batch_size) + 1}/{total_batches}...")
+            collection.add(
+                ids=batch_ids,
+                documents=batch_texts,
+                metadatas=batch_metadatas
+            )
+            logger.info(f"Indexed batch of {len(batch_ids)} documents")
+        
+        logger.info(f"Successfully indexed {len(chunked_docs)} document chunks in ChromaDB")
+        print(f"✅ Successfully indexed {len(documents)} documents ({len(chunked_docs)} chunks) in ChromaDB.")
         
     except Exception as e:
         logger.error(f"Error indexing documents: {e}")

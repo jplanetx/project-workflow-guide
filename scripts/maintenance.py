@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Maintenance Script for RAG AI Assistant
-Provides utilities to manage the Mem0 database and rebuild the document index.
+Provides utilities to manage the ChromaDB database and rebuild the document index.
 """
 
 import os
@@ -26,37 +26,37 @@ logger = logging.getLogger("rag_maintenance")
 # Path to project root directory
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Path to Mem0 database
-MEM0_DB_PATH = os.path.join(ROOT_DIR, "rag_agent", "mem0_db")
+# Path to ChromaDB database
+CHROMA_DB_PATH = os.path.join(ROOT_DIR, "rag_agent", "chroma_db")
 
-def clear_mem0_db():
-    """Clear the Mem0 database by deleting and recreating the directory."""
-    logger.info(f"Clearing Mem0 database at {MEM0_DB_PATH}")
+def clear_vector_db():
+    """Clear the ChromaDB database by deleting and recreating the directory."""
+    logger.info(f"Clearing ChromaDB database at {CHROMA_DB_PATH}")
     
     try:
-        if os.path.exists(MEM0_DB_PATH):
+        if os.path.exists(CHROMA_DB_PATH):
             # Create backup first
-            backup_dir = f"{MEM0_DB_PATH}_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            backup_dir = f"{CHROMA_DB_PATH}_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             logger.info(f"Creating backup at {backup_dir}")
-            shutil.copytree(MEM0_DB_PATH, backup_dir)
+            shutil.copytree(CHROMA_DB_PATH, backup_dir)
             
             # Remove existing database
-            shutil.rmtree(MEM0_DB_PATH)
+            shutil.rmtree(CHROMA_DB_PATH)
         
         # Create fresh directory
-        os.makedirs(MEM0_DB_PATH, exist_ok=True)
-        logger.info("Mem0 database cleared successfully")
-        print("✅ Mem0 database cleared.")
+        os.makedirs(CHROMA_DB_PATH, exist_ok=True)
+        logger.info("ChromaDB database cleared successfully")
+        print("✅ Vector database cleared.")
         return True
     
     except Exception as e:
-        logger.error(f"Error clearing Mem0 database: {e}")
-        print(f"❌ Error clearing Mem0 database: {e}")
+        logger.error(f"Error clearing vector database: {e}")
+        print(f"❌ Error clearing vector database: {e}")
         return False
 
-def rebuild_mem0_db():
-    """Rebuild the Mem0 database by running the indexing script."""
-    logger.info("Rebuilding Mem0 database")
+def rebuild_vector_db():
+    """Rebuild the vector database by running the indexing script."""
+    logger.info("Rebuilding vector database")
     
     try:
         # Get path to index_documents.py
@@ -76,48 +76,49 @@ def rebuild_mem0_db():
         result = os.system(f'"{python_exe}" "{index_script}"')
         
         if result == 0:
-            logger.info("Mem0 database rebuilt successfully")
-            print("✅ Mem0 database rebuilt successfully.")
+            logger.info("Vector database rebuilt successfully")
+            print("✅ Vector database rebuilt successfully.")
             return True
         else:
-            logger.error(f"Error rebuilding Mem0 database. Exit code: {result}")
-            print(f"❌ Error rebuilding Mem0 database. See logs for details.")
+            logger.error(f"Error rebuilding vector database. Exit code: {result}")
+            print(f"❌ Error rebuilding vector database. See logs for details.")
             return False
     
     except Exception as e:
-        logger.error(f"Error rebuilding Mem0 database: {e}")
+        logger.error(f"Error rebuilding vector database: {e}")
         print(f"❌ Error: {e}")
         return False
 
-def check_mem0_status():
-    """Check the status of the Mem0 database."""
-    logger.info("Checking Mem0 database status")
+def check_vector_db_status():
+    """Check the status of the vector database."""
+    logger.info("Checking vector database status")
     
     try:
         # Check if database directory exists
-        if not os.path.exists(MEM0_DB_PATH):
-            logger.warning(f"Mem0 database not found at {MEM0_DB_PATH}")
-            print(f"⚠️ Mem0 database not found at {MEM0_DB_PATH}")
+        if not os.path.exists(CHROMA_DB_PATH):
+            logger.warning(f"Vector database not found at {CHROMA_DB_PATH}")
+            print(f"⚠️ Vector database not found at {CHROMA_DB_PATH}")
             return False
         
         # Check for essential files
-        files = os.listdir(MEM0_DB_PATH)
+        files = os.listdir(CHROMA_DB_PATH)
         
         if not files:
-            logger.warning("Mem0 database directory is empty")
-            print("⚠️ Mem0 database directory is empty.")
+            logger.warning("Vector database directory is empty")
+            print("⚠️ Vector database directory is empty.")
             return False
         
         # Check database size
-        total_size = sum(os.path.getsize(os.path.join(MEM0_DB_PATH, f)) for f in files if os.path.isfile(os.path.join(MEM0_DB_PATH, f)))
+        total_size = sum(os.path.getsize(os.path.join(CHROMA_DB_PATH, f)) 
+                         for f in files if os.path.isfile(os.path.join(CHROMA_DB_PATH, f)))
         
-        logger.info(f"Mem0 database contains {len(files)} files, total size: {total_size / (1024*1024):.2f} MB")
-        print(f"✅ Mem0 database status: {len(files)} files, {total_size / (1024*1024):.2f} MB")
+        logger.info(f"Vector database contains {len(files)} files, total size: {total_size / (1024*1024):.2f} MB")
+        print(f"✅ Vector database status: {len(files)} files, {total_size / (1024*1024):.2f} MB")
         
         return True
     
     except Exception as e:
-        logger.error(f"Error checking Mem0 database status: {e}")
+        logger.error(f"Error checking vector database status: {e}")
         print(f"❌ Error: {e}")
         return False
 
@@ -126,10 +127,10 @@ def main():
     parser = argparse.ArgumentParser(description="Maintenance tools for RAG AI Assistant")
     
     # Add command line arguments
-    parser.add_argument('--clear', action='store_true', help="Clear the Mem0 database")
-    parser.add_argument('--rebuild', action='store_true', help="Rebuild the Mem0 database")
-    parser.add_argument('--status', action='store_true', help="Check the status of the Mem0 database")
-    parser.add_argument('--reset', action='store_true', help="Clear and rebuild the Mem0 database")
+    parser.add_argument('--clear', action='store_true', help="Clear the vector database")
+    parser.add_argument('--rebuild', action='store_true', help="Rebuild the vector database")
+    parser.add_argument('--status', action='store_true', help="Check the status of the vector database")
+    parser.add_argument('--reset', action='store_true', help="Clear and rebuild the vector database")
     
     args = parser.parse_args()
     
@@ -140,15 +141,15 @@ def main():
     
     # Check status
     if args.status:
-        check_mem0_status()
+        check_vector_db_status()
     
     # Clear database
     if args.clear or args.reset:
-        clear_mem0_db()
+        clear_vector_db()
     
     # Rebuild database
     if args.rebuild or args.reset:
-        rebuild_mem0_db()
+        rebuild_vector_db()
     
     return 0
 
