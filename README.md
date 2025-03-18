@@ -24,12 +24,19 @@ project-workflow-guide/
 │   └── tasks/
 │       └── TASK_TEMPLATE.md
 ├── logs/                    # Generated log files from scripts
-└── scripts/
-    ├── start_task.py        # Creates GitHub issues and local task files
-    ├── finish_task.py       # Closes GitHub issues and updates local files
-    ├── task_logger.py       # Logging utility for scripts
-    ├── slash_commands.py    # AI-powered slash commands for workflow
-    └── config.ini           # Configuration for GitHub repository
+├── rag_agent/               # RAG AI Assistant files
+│   ├── chat_rag.py          # Interactive RAG chatbot
+│   ├── index_documents.py   # Document indexer
+│   ├── query_engine.py      # Knowledge retrieval engine
+│   └── requirements.txt     # RAG-specific dependencies
+├── scripts/
+│   ├── start_task.py        # Creates GitHub issues and local task files
+│   ├── finish_task.py       # Closes GitHub issues and updates local files
+│   ├── task_logger.py       # Logging utility for scripts
+│   ├── slash_commands.py    # AI-powered slash commands for workflow
+│   ├── maintenance.py       # RAG system maintenance
+│   └── config.ini           # Configuration for GitHub repository
+└── setup_rag.bat/sh         # Setup scripts for RAG system
 ```
 
 ## Key Features
@@ -39,6 +46,7 @@ project-workflow-guide/
 - **Error Handling**: Robust error recovery with retry mechanisms and detailed logging
 - **Standardized Templates**: PR and Issue templates for consistent GitHub workflow
 - **AI-Powered Slash Commands**: Quick commands to improve development workflow
+- **RAG AI Assistant**: Intelligent Q&A system using project documentation
 
 ## Setup
 
@@ -47,6 +55,14 @@ project-workflow-guide/
    - Create a `.env` file in the `scripts` directory with your GitHub token: `GITHUB_TOKEN=your_token_here`
    - Update the `config.ini` file with your GitHub username and repository name
 3. Install required dependencies: `pip install -r requirements.txt`
+4. For the RAG AI Assistant, run the setup script:
+   ```bash
+   # Windows
+   setup_rag.bat
+   
+   # Linux/Mac
+   ./setup_rag.sh
+   ```
 
 ## Usage
 
@@ -77,5 +93,23 @@ To reduce token consumption, add the `--brief_mode` flag:
 ```bash
 python scripts/slash_commands.py /check-bugs --brief_mode
 ```
+
+### RAG AI Assistant
+
+The RAG (Retrieval-Augmented Generation) AI Assistant helps you get answers about your project by retrieving knowledge from your documentation:
+
+1. Index your project documents:
+   ```bash
+   python rag_agent/index_documents.py
+   ```
+
+2. Start the interactive chat interface:
+   ```bash
+   python rag_agent/chat_rag.py
+   ```
+
+3. Ask questions about your project, and the assistant will retrieve relevant information to provide answers.
+
+See [AI Assistance Guide](docs/ai_assistance_guide.md) for more details.
 
 Feel free to modify these templates as needed for your project.

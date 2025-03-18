@@ -1,0 +1,5 @@
+mem0==0.1.0
+openai>=1.1.0
+python-dotenv>=1.0.0
+rich>=13.5.0
+llama-index>=0.8.0
