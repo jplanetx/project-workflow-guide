@@ -1,0 +1,16 @@
+requests>=2.32.3
+configparser
+python-dotenv>=1.0.0
+
+# Async HTTP and parallel processing
+httpx>=0.26.0
+
+# For AI system
+tiktoken>=0.5.2
+openai>=1.10.0
+anthropic>=0.8.0
+
+# For data handling
+matplotlib>=3.8.2
+pandas>=2.1.4
+python-dateutil>=2.8.2

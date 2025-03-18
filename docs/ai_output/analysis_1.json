@@ -1,0 +1,33 @@
+{
+  "quality": {
+    "score": 0.85,
+    "issues": [
+      {
+        "type": "style",
+        "description": "Consider adding more comprehensive docstrings"
+      },
+      {
+        "type": "structure",
+        "description": "Function could be broken down into smaller units"
+      }
+    ],
+    "strengths": [
+      "Good variable naming",
+      "Clear control flow"
+    ]
+  },
+  "performance": {
+    "score": 0.9,
+    "issues": [],
+    "suggestions": [
+      "Consider caching results for repeated operations"
+    ]
+  },
+  "security": {
+    "score": 0.95,
+    "vulnerabilities": [],
+    "notes": [
+      "Ensure input validation in production environment"
+    ]
+  }
+}

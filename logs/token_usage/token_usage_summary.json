@@ -1,0 +1,41 @@
+{
+  "total_tokens": 3121,
+  "total_cost": 0.06684500000000002,
+  "prompt_tokens": 1121,
+  "completion_tokens": 2000,
+  "by_task": {
+    "context_priming": {
+      "title": "Test Parallel Execution",
+      "total_tokens": 873,
+      "total_cost": 0.004365,
+      "query_count": 1
+    },
+    "1": {
+      "title": "Test Parallel Execution",
+      "total_tokens": 2248,
+      "total_cost": 0.06248000000000001,
+      "query_count": 3
+    }
+  },
+  "by_month": {
+    "2025-03": {
+      "total_tokens": 3121,
+      "total_cost": 0.06684500000000002,
+      "query_count": 4
+    }
+  },
+  "by_api": {
+    "internal_collection": {
+      "total_tokens": 873,
+      "total_cost": 0.004365,
+      "query_count": 1
+    },
+    "claude-3-opus": {
+      "total_tokens": 2248,
+      "total_cost": 0.06248000000000001,
+      "query_count": 3
+    }
+  },
+  "last_updated": "2025-03-18T00:30:35.066011",
+  "token_saving_tips": []
+}

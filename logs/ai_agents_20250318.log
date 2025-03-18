@@ -1,0 +1,22 @@
+2025-03-18 00:30:29,745 - ai_agents - INFO - GitHub configuration loaded successfully
+2025-03-18 00:30:29,745 - ai_agents - INFO - Starting parallel data collection
+2025-03-18 00:30:30,569 - ai_agents - INFO - Collected error logs from 0 files
+2025-03-18 00:30:30,569 - ai_agents - DEBUG - Generating project directory structure
+2025-03-18 00:30:30,569 - ai_agents - INFO - Successfully generated directory structure
+2025-03-18 00:30:30,981 - ai_agents - INFO - Successfully fetched 0 closed issues
+2025-03-18 00:30:30,981 - ai_agents - INFO - Successfully fetched 0 open issues
+2025-03-18 00:30:31,046 - ai_agents - INFO - Successfully fetched README.md
+2025-03-18 00:30:31,046 - ai_agents - INFO - Successfully fetched 2 commits
+2025-03-18 00:30:31,060 - ai_agents - INFO - Completed data collection (est. 873 tokens)
+2025-03-18 00:30:31,060 - ai_agents - INFO - Context document saved to docs\context_priming.md
+2025-03-18 00:30:31,065 - ai_agents - INFO - Saved context document to docs\context_priming.md
+2025-03-18 00:30:32,818 - ai_agents - INFO - GitHub configuration loaded successfully
+2025-03-18 00:30:32,818 - ai_agents - INFO - Running executor agent for task type: code_generation
+2025-03-18 00:30:32,818 - ai_agents - INFO - Generating code for prompt of length 379 chars
+2025-03-18 00:30:33,857 - ai_agents - INFO - Generated 15 lines of code
+2025-03-18 00:30:33,862 - ai_agents - INFO - Generating tests for code of length 308 chars
+2025-03-18 00:30:34,362 - ai_agents - INFO - Generated 20 lines of tests
+2025-03-18 00:30:34,362 - ai_agents - INFO - Analyzing code of length 308 chars
+2025-03-18 00:30:35,076 - ai_agents - INFO - Completed code analysis
+2025-03-18 00:30:35,076 - ai_agents - INFO - Executor agent completed code_generation task
+2025-03-18 00:30:35,082 - ai_agents - INFO - Saved 3 result files to docs\ai_output

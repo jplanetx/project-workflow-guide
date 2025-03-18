@@ -2,6 +2,7 @@
 .venv/
 venv/
 env/
+ENV/
 
 # Environment variables
 .env
@@ -14,6 +15,8 @@ scripts/config.ini
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
 
 # Distribution / packaging
 dist/
