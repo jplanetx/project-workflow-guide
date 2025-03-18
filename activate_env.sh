@@ -8,5 +8,5 @@ if [ -f "$VENV_PATH" ]; then
     source "$VENV_PATH"
     echo "Virtual environment activated. You can now run your scripts."
 else
-    echo "Virtual environment not found. Please run clean_environment.bat first."
+    echo "Virtual environment not found. Please run quick_setup.bat first."
 fi

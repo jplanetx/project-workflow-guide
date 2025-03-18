@@ -14,7 +14,17 @@ python -m venv venv
 :: Activate and install requirements
 echo Activating virtual environment and installing requirements...
 call venv\Scripts\activate
-pip install -r requirements.txt
+
+echo.
+echo About to install packages from requirements.txt. This may take several minutes.
+echo Some packages like matplotlib, pandas, and AI libraries require significant time to download and install.
+echo.
+echo Press Ctrl+C if you want to abort the installation process.
+echo Press any key to continue with package installation...
+pause
+
+:: Install with verbose output to show progress
+pip install -r requirements.txt -v
 
 echo Environment setup complete!
 echo.

@@ -1,23 +1,20 @@
-# Core dependencies for your project
-# Add your required packages here, for example:
+# TIER 1: Essential packages (fast to install)
 requests
 python-dotenv
-
-# Async HTTP and parallel processing
 httpx>=0.26.0
-asyncio>=3.4.3
 
-# For AI system
-tiktoken>=0.5.2
-openai>=1.10.0
-anthropic>=0.8.0
+# TIER 2: Common dependencies (comment out if needed)
+# asyncio>=3.4.3
+# tiktoken>=0.5.2
 
-# For logging and data handling
-logging
-matplotlib>=3.8.2
-pandas>=2.1.4
-python-dateutil>=2.8.2
+# TIER 3: Large packages (comment these out for faster setup)
+# openai>=1.10.0
+# anthropic>=0.8.0
+# matplotlib>=3.8.2
+# pandas>=2.1.4
+# python-dateutil>=2.8.2
 
-# For code analysis
-ast
-re
+# Leave these packages uncommented only if directly needed
+# logging
+# ast
+# re

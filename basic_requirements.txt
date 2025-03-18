@@ -1,0 +1,4 @@
+# Essential packages only
+requests
+python-dotenv
+httpx>=0.26.0

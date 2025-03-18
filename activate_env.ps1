@@ -6,5 +6,5 @@ if (Test-Path $venvPath) {
     & $venvPath
     Write-Host "Virtual environment activated. You can now run your scripts." -ForegroundColor Green
 } else {
-    Write-Host "Virtual environment not found. Please run clean_environment.bat first." -ForegroundColor Red
+    Write-Host "Virtual environment not found. Please run quick_setup.bat first." -ForegroundColor Red
 }
