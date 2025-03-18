@@ -12,8 +12,8 @@ from configparser import ConfigParser
 from dotenv import load_dotenv
 
 # Import custom modules
-from task_logger import setup_logger
-from token_tracker import TokenTracker
+from scripts.task_logger import setup_logger
+from scripts.token_tracker import TokenTracker
 
 # Set up logger
 logger = setup_logger('ai_agents')

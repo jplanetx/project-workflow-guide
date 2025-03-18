@@ -9,7 +9,7 @@ from configparser import ConfigParser
 from dotenv import load_dotenv
 
 # Import our custom logger
-from task_logger import setup_logger
+from scripts.task_logger import setup_logger
 
 # Set up logger
 logger = setup_logger('token_tracker')

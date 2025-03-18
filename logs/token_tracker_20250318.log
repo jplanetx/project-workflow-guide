@@ -24,3 +24,21 @@
 2025-03-18 05:39:11,740 - token_tracker - INFO - Logged 1526 tokens ($0.014178) for task general: General Agent Task
 2025-03-18 05:40:28,762 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
 2025-03-18 05:40:28,763 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 05:47:14,912 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 05:47:14,913 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 05:48:03,034 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 05:48:03,035 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 05:53:14,922 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 05:53:14,923 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 06:02:52,780 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 06:02:52,781 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 06:02:55,165 - token_tracker - DEBUG - Saved token usage summary to C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 06:02:55,165 - token_tracker - INFO - Generated token saving tip for large prompt (5316 tokens)
+2025-03-18 06:02:55,167 - token_tracker - DEBUG - Saved token usage summary to C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 06:02:55,167 - token_tracker - INFO - Logged 6516 tokens ($0.033948) for task general: General Agent Task
+2025-03-18 06:19:03,431 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 06:19:03,442 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 06:19:49,338 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 06:19:49,339 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 06:20:51,957 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 06:20:51,958 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json

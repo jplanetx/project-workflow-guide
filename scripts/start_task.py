@@ -12,9 +12,9 @@ from dotenv import load_dotenv
 from difflib import SequenceMatcher
 
 # Import our custom logger and AI-related modules
-from task_logger import setup_logger
-from token_tracker import TokenTracker
-import ai_agents
+from scripts.task_logger import setup_logger
+from scripts.token_tracker import TokenTracker
+from scripts import ai_agents
 
 # Set up logger
 logger = setup_logger('start_task')

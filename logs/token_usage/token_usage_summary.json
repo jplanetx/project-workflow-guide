@@ -1,8 +1,8 @@
 {
-  "total_tokens": 4647,
-  "total_cost": 0.08102300000000001,
-  "prompt_tokens": 1847,
-  "completion_tokens": 2800,
+  "total_tokens": 11163,
+  "total_cost": 0.11497100000000002,
+  "prompt_tokens": 7163,
+  "completion_tokens": 4000,
   "by_task": {
     "context_priming": {
       "title": "Test Parallel Execution",
@@ -18,16 +18,16 @@
     },
     "general": {
       "title": "General Agent Task",
-      "total_tokens": 1526,
-      "total_cost": 0.014178,
-      "query_count": 1
+      "total_tokens": 8042,
+      "total_cost": 0.048126,
+      "query_count": 2
     }
   },
   "by_month": {
     "2025-03": {
-      "total_tokens": 4647,
-      "total_cost": 0.08102300000000001,
-      "query_count": 5
+      "total_tokens": 11163,
+      "total_cost": 0.11497100000000002,
+      "query_count": 6
     }
   },
   "by_api": {
@@ -42,11 +42,19 @@
       "query_count": 3
     },
     "claude-3-sonnet": {
-      "total_tokens": 1526,
-      "total_cost": 0.014178,
-      "query_count": 1
+      "total_tokens": 8042,
+      "total_cost": 0.048126,
+      "query_count": 2
     }
   },
-  "last_updated": "2025-03-18T05:39:11.736441",
-  "token_saving_tips": []
+  "last_updated": "2025-03-18T06:02:55.163504",
+  "token_saving_tips": [
+    {
+      "type": "large_prompt",
+      "task": "General Agent Task",
+      "tokens": 5316,
+      "suggestion": "Consider breaking down large prompts into smaller, focused queries. Extract only the most relevant context.",
+      "timestamp": "2025-03-18T06:02:55.165506"
+    }
+  ]
 }
