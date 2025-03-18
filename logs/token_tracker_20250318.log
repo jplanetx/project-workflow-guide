@@ -15,3 +15,12 @@
 2025-03-18 00:30:35,075 - token_tracker - INFO - Logged 577 tokens ($0.015770) for task 1: Test Parallel Execution
 2025-03-18 02:49:43,623 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
 2025-03-18 02:49:43,624 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 05:38:28,270 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 05:38:28,271 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 05:39:10,368 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 05:39:10,369 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 05:39:11,738 - token_tracker - DEBUG - Saved token usage summary to C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 05:39:11,740 - token_tracker - DEBUG - Saved token usage summary to C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 05:39:11,740 - token_tracker - INFO - Logged 1526 tokens ($0.014178) for task general: General Agent Task
+2025-03-18 05:40:28,762 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json
+2025-03-18 05:40:28,763 - token_tracker - DEBUG - Loaded token usage summary from C:\Projects\project-workflow-guide w git support\scripts\..\logs\token_usage\token_usage_summary.json

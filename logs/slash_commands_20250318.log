@@ -1,0 +1,5 @@
+2025-03-18 05:38:29,549 - slash_commands - INFO - Successfully fetched 1 open issues
+2025-03-18 05:39:11,219 - slash_commands - INFO - Successfully fetched README.md
+2025-03-18 05:39:11,220 - slash_commands - INFO - Generating README summary
+2025-03-18 05:40:30,314 - slash_commands - ERROR - Error getting content for scripts/slash_commands.py: Client error '404 Not Found' for url 'https://raw.githubusercontent.com/jplanetx/project-workflow-guide/main/scripts/slash_commands.py'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404

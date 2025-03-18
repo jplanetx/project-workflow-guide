@@ -1,8 +1,8 @@
 {
-  "total_tokens": 3121,
-  "total_cost": 0.06684500000000002,
-  "prompt_tokens": 1121,
-  "completion_tokens": 2000,
+  "total_tokens": 4647,
+  "total_cost": 0.08102300000000001,
+  "prompt_tokens": 1847,
+  "completion_tokens": 2800,
   "by_task": {
     "context_priming": {
       "title": "Test Parallel Execution",
@@ -15,13 +15,19 @@
       "total_tokens": 2248,
       "total_cost": 0.06248000000000001,
       "query_count": 3
+    },
+    "general": {
+      "title": "General Agent Task",
+      "total_tokens": 1526,
+      "total_cost": 0.014178,
+      "query_count": 1
     }
   },
   "by_month": {
     "2025-03": {
-      "total_tokens": 3121,
-      "total_cost": 0.06684500000000002,
-      "query_count": 4
+      "total_tokens": 4647,
+      "total_cost": 0.08102300000000001,
+      "query_count": 5
     }
   },
   "by_api": {
@@ -34,8 +40,13 @@
       "total_tokens": 2248,
       "total_cost": 0.06248000000000001,
       "query_count": 3
+    },
+    "claude-3-sonnet": {
+      "total_tokens": 1526,
+      "total_cost": 0.014178,
+      "query_count": 1
     }
   },
-  "last_updated": "2025-03-18T00:30:35.066011",
+  "last_updated": "2025-03-18T05:39:11.736441",
   "token_saving_tips": []
 }

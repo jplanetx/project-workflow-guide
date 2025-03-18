@@ -5,9 +5,11 @@ import json
 import time
 import asyncio
 import httpx
+import re
 from datetime import datetime
 from configparser import ConfigParser
 from dotenv import load_dotenv
+from difflib import SequenceMatcher
 
 # Import our custom logger and AI-related modules
 from task_logger import setup_logger
@@ -59,40 +61,122 @@ async def load_config():
     
     return github_config
 
-async def check_duplicate_issues(title, config):
-    """Check if an issue with the same title already exists using async HTTP."""
+def calculate_similarity(text1, text2):
+    """Calculate text similarity using SequenceMatcher."""
+    return SequenceMatcher(None, text1.lower(), text2.lower()).ratio()
+
+def tokenize_text(text):
+    """Tokenize text by removing common stop words and keeping meaningful words."""
+    # Simple list of stop words to exclude
+    stop_words = {'a', 'an', 'the', 'and', 'or', 'but', 'is', 'are', 'in', 'to', 'for', 'with', 'on', 'at'}
+    
+    # Clean text - remove punctuation and split into words
+    words = re.findall(r'\b\w+\b', text.lower())
+    
+    # Remove stop words and words less than 3 chars
+    tokens = [word for word in words if word not in stop_words and len(word) >= 3]
+    
+    return tokens
+
+def calculate_token_similarity(tokens1, tokens2):
+    """Calculate the similarity based on shared tokens."""
+    if not tokens1 or not tokens2:
+        return 0.0
+    
+    set1 = set(tokens1)
+    set2 = set(tokens2)
+    
+    intersection = set1.intersection(set2)
+    union = set1.union(set2)
+    
+    # Token overlap ratio
+    jaccard_index = len(intersection) / len(union) if union else 0
+    
+    # Weighted by number of common tokens
+    return jaccard_index * (1 + 0.1 * len(intersection))
+
+async def find_similar_issues(title, config, similarity_threshold=0.7):
+    """Find issues with similar titles using fuzzy matching."""
     headers = {
         'Authorization': f'token {config["token"]}',
         'Accept': 'application/vnd.github.v3+json'
     }
     
-    search_url = f"https://api.github.com/search/issues?q=repo:{config['owner']}/{config['repo']}+is:issue+\"{title}\""
+    # Extract tokens from the query title
+    query_tokens = tokenize_text(title)
+    
+    # Get all open issues from the repository
+    issues_url = f"https://api.github.com/repos/{config['owner']}/{config['repo']}/issues?state=all&per_page=100"
     
     async with httpx.AsyncClient() as client:
-        for attempt in range(3):  # Max 3 retries
-            try:
-                logger.debug(f"Checking for duplicate issues with title: {title}")
-                response = await client.get(search_url, headers=headers)
-                response.raise_for_status()
-                search_results = response.json()
+        try:
+            logger.debug(f"Searching for issues similar to: {title}")
+            response = await client.get(issues_url, headers=headers)
+            response.raise_for_status()
+            all_issues = response.json()
+            
+            # Filter out pull requests
+            issues = [issue for issue in all_issues if 'pull_request' not in issue]
+            
+            if not issues:
+                logger.info("No issues found in the repository")
+                return None, None, []
+            
+            # Calculate similarity for each issue
+            similar_issues = []
+            exact_match = None
+            exact_match_url = None
+            highest_similarity = 0
+            highest_sim_issue = None
+            
+            for issue in issues:
+                issue_title = issue['title']
                 
-                for item in search_results['items']:
-                    if item['title'].lower() == title.lower():
-                        logger.info(f"Found existing issue with the same title: #{item['number']}")
-                        return item['number'], item['html_url']
+                # Check for exact match first (case insensitive)
+                if issue_title.lower() == title.lower():
+                    exact_match = issue['number']
+                    exact_match_url = issue['html_url']
+                    logger.info(f"Found exact match: #{issue['number']} - {issue_title}")
                 
-                logger.debug("No duplicate issues found")
-                return None, None
+                # Calculate similarity scores
+                string_similarity = calculate_similarity(title, issue_title)
                 
-            except httpx.HTTPStatusError as e:
-                logger.warning(f"Attempt {attempt + 1}/3 failed when checking for duplicates: {e}")
-                if attempt < 2:  # Only retry if we haven't done 3 attempts yet
-                    wait_time = 2 ** attempt  # Exponential backoff: 1, 2, 4 seconds
-                    logger.info(f"Retrying in {wait_time} seconds...")
-                    await asyncio.sleep(wait_time)
-                else:
-                    logger.error(f"Failed to check for duplicate issues after 3 attempts")
-                    return None, None
+                # Token-based similarity
+                issue_tokens = tokenize_text(issue_title)
+                token_similarity = calculate_token_similarity(query_tokens, issue_tokens)
+                
+                # Combined similarity score (weighted)
+                combined_similarity = 0.4 * string_similarity + 0.6 * token_similarity
+                
+                # Track highest similarity issue
+                if combined_similarity > highest_similarity:
+                    highest_similarity = combined_similarity
+                    highest_sim_issue = issue
+                
+                # Add to similar issues if above threshold
+                if combined_similarity >= similarity_threshold:
+                    similar_issues.append({
+                        'number': issue['number'],
+                        'title': issue_title,
+                        'state': issue['state'],
+                        'created_at': issue['created_at'],
+                        'url': issue['html_url'],
+                        'similarity': round(combined_similarity, 2)
+                    })
+            
+            # Sort similar issues by similarity score
+            similar_issues.sort(key=lambda x: x['similarity'], reverse=True)
+            
+            # If no exact match but we have a very similar issue (>0.85 similarity)
+            if not exact_match and highest_similarity > 0.85 and highest_sim_issue:
+                logger.info(f"Found highly similar issue: #{highest_sim_issue['number']} - {highest_sim_issue['title']} (similarity: {highest_similarity:.2f})")
+                return highest_sim_issue['number'], highest_sim_issue['html_url'], similar_issues
+            
+            return exact_match, exact_match_url, similar_issues
+            
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Error searching for similar issues: {e}")
+            return None, None, []
 
 async def create_github_issue(title, config, related_issues=None):
     """Create a GitHub issue using the API with async HTTP."""
@@ -116,7 +200,8 @@ async def create_github_issue(title, config, related_issues=None):
         issue_template += "## Related Issues\n"
         for issue in related_issues[:5]:  # Limit to top 5 most relevant issues
             status_icon = "🟢" if issue['state'] == 'open' else "🔴"
-            issue_template += f"- {status_icon} #{issue['number']} [{issue['title']}]({issue['url']}) (Relevance: {issue['relevance']})\n"
+            similarity_pct = f"{issue['similarity'] * 100:.0f}%" if 'similarity' in issue else f"{issue.get('relevance', 0) * 100:.0f}%"
+            issue_template += f"- {status_icon} #{issue['number']} [{issue['title']}]({issue['url']}) (Similarity: {similarity_pct})\n"
         issue_template += "\n"
     
     # Add standard footer
@@ -155,7 +240,7 @@ async def create_github_issue(title, config, related_issues=None):
                     return None, None
 
 async def find_related_issues(task_title, config):
-    """Find issues related to a given task title."""
+    """Find issues related to a given task title but not necessarily similar."""
     headers = {
         'Authorization': f'token {config["token"]}',
         'Accept': 'application/vnd.github.v3+json'
@@ -197,7 +282,7 @@ async def find_related_issues(task_title, config):
                     relevance = len(common_words) / max(len(keywords_set), len(title_words))
                     
                     # Only include issues with relevance above threshold
-                    if relevance >= 0.3:  # Lower threshold to find more related issues
+                    if relevance >= 0.2:  # Lower threshold to find more related issues
                         related_issues.append({
                             'number': item['number'],
                             'title': item['title'],
@@ -287,21 +372,56 @@ async def main():
     
     logger.debug("Configuration loaded successfully")
     
-    # Check for duplicate issues first
-    duplicate_number, duplicate_url = await check_duplicate_issues(task_title, config)
-    if duplicate_number:
-        logger.warning(f"An issue with this title already exists: #{duplicate_number}")
-        print(f"Issue already exists with the same title: #{duplicate_number}")
-        print(f"URL: {duplicate_url}")
+    # Check for similar issues first using fuzzy matching
+    exact_match, exact_url, similar_issues = await find_similar_issues(task_title, config)
+    
+    issue_number = None
+    issue_url = None
+    
+    if exact_match:
+        logger.warning(f"An issue with this title already exists: #{exact_match}")
+        print(f"Issue already exists with the same title: #{exact_match}")
+        print(f"URL: {exact_url}")
         use_existing = input("Would you like to use this existing issue? (y/n): ").lower()
         
         if use_existing == 'y':
-            issue_number = duplicate_number
-            issue_url = duplicate_url
+            issue_number = exact_match
+            issue_url = exact_url
         else:
             print("Exiting without creating a new issue.")
             sys.exit(0)
-    else:
+    elif similar_issues:
+        # Display similar issues
+        print("\nSimilar issues found:")
+        for i, issue in enumerate(similar_issues[:5], 1):  # Show top 5
+            status = "OPEN" if issue['state'] == 'open' else "CLOSED"
+            similarity_pct = f"{issue['similarity'] * 100:.0f}%"
+            print(f"{i}. #{issue['number']} [{status}] {issue['title']} (Similarity: {similarity_pct})")
+        
+        print("\nOptions:")
+        print("0. Create a new issue")
+        for i in range(1, min(len(similar_issues[:5]) + 1, 6)):
+            print(f"{i}. Link to issue #{similar_issues[i-1]['number']}")
+        
+        choice = input("\nChoose an option (0-5): ")
+        
+        try:
+            choice_num = int(choice)
+            if 1 <= choice_num <= len(similar_issues[:5]):
+                # User chose to link to an existing issue
+                selected_issue = similar_issues[choice_num - 1]
+                issue_number = selected_issue['number']
+                issue_url = selected_issue['url']
+                print(f"Using existing issue #{issue_number}")
+            else:
+                # User chose to create a new issue
+                print("Creating a new issue...")
+                # Continue to issue creation below
+        except ValueError:
+            # Default to creating a new issue if input is invalid
+            print("Invalid choice. Creating a new issue...")
+    
+    if not issue_number:
         # Run context collection and issue search in parallel
         logger.info(f"Generating AI context and searching for related issues in parallel")
         print("Generating AI context and searching for related issues in parallel...")
@@ -314,18 +434,31 @@ async def main():
         context_file, context_data = await context_task
         related_issues = await related_issues_task
         
+        # Combine similar and related issues, prioritizing similar ones
+        all_issues = similar_issues.copy() if similar_issues else []
+        
+        # Add related issues that aren't already in similar issues
+        if related_issues:
+            similar_numbers = {issue['number'] for issue in all_issues}
+            for issue in related_issues:
+                if issue['number'] not in similar_numbers:
+                    all_issues.append(issue)
+        
+        # Sort all issues by similarity/relevance (highest first)
+        all_issues.sort(key=lambda x: x.get('similarity', x.get('relevance', 0)), reverse=True)
+        
         if context_file:
             print(f"AI context primer generated: {context_file}")
         else:
             print("Warning: Failed to generate AI context primer")
         
-        if related_issues:
-            print(f"Found {len(related_issues)} related issues")
+        if all_issues:
+            print(f"Found {len(all_issues)} similar or related issues")
         else:
-            print("No related issues found")
+            print("No similar or related issues found")
         
         # Create GitHub issue with related issues included
-        issue_number, issue_url = await create_github_issue(task_title, config, related_issues)
+        issue_number, issue_url = await create_github_issue(task_title, config, all_issues)
         
         if not issue_number:
             logger.error("Failed to create GitHub issue")
