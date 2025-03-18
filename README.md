@@ -28,6 +28,7 @@ project-workflow-guide/
     ├── start_task.py        # Creates GitHub issues and local task files
     ├── finish_task.py       # Closes GitHub issues and updates local files
     ├── task_logger.py       # Logging utility for scripts
+    ├── slash_commands.py    # AI-powered slash commands for workflow
     └── config.ini           # Configuration for GitHub repository
 ```
 
@@ -37,6 +38,7 @@ project-workflow-guide/
 - **Local Task Management**: Generate and update local markdown files for detailed task documentation
 - **Error Handling**: Robust error recovery with retry mechanisms and detailed logging
 - **Standardized Templates**: PR and Issue templates for consistent GitHub workflow
+- **AI-Powered Slash Commands**: Quick commands to improve development workflow
 
 ## Setup
 
@@ -51,5 +53,29 @@ project-workflow-guide/
 1. Review the documents in the `docs` folder for guidelines on setting up tasks, tracking work, and managing project structure
 2. Start a new task: `python scripts/start_task.py "Your Task Title"`
 3. Finish a task: `python scripts/finish_task.py "Your Task Title" "Optional verification notes"`
+
+### Slash Commands
+
+For quick workflow actions, use these AI-powered slash commands:
+
+- `/check-bugs`: Fetch unresolved GitHub issues, highlighting ones labeled as bugs
+  ```bash
+  python scripts/slash_commands.py /check-bugs
+  ```
+
+- `/summarize-docs`: Generate an AI summary of the README
+  ```bash
+  python scripts/slash_commands.py /summarize-docs
+  ```
+
+- `/generate-tests`: AI generates unit tests for recent code changes
+  ```bash
+  python scripts/slash_commands.py /generate-tests
+  ```
+
+To reduce token consumption, add the `--brief_mode` flag:
+```bash
+python scripts/slash_commands.py /check-bugs --brief_mode
+```
 
 Feel free to modify these templates as needed for your project.
