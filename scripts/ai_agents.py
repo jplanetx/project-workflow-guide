@@ -161,6 +161,31 @@ class CollectorAgent(BaseAgent):
                 logger.error(f"Error fetching issues: {e}")
                 return []
     
+    def _get_log_files(self, logs_dir: str) -> List[Tuple[str, float]]:
+        """Get a list of log files sorted by modification time (newest first)"""
+        log_files = []
+        for root, _, files in os.walk(logs_dir):
+            for file in files:
+                if file.endswith('.log'):
+                    full_path = os.path.join(root, file)
+                    log_files.append((full_path, os.path.getmtime(full_path)))
+        
+        # Sort by modification time, newest first
+        log_files.sort(key=lambda x: x[1], reverse=True)
+        return log_files
+    
+    def _extract_error_lines(self, log_path: str) -> List[str]:
+        """Extract error and critical lines from a log file"""
+        error_lines = []
+        try:
+            with open(log_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if 'ERROR' in line or 'CRITICAL' in line:
+                        error_lines.append(line.strip())
+        except Exception as e:
+            logger.error(f"Error reading log file {log_path}: {e}")
+        return error_lines
+    
     async def get_error_logs(self, logs_dir: str = None) -> Dict[str, str]:
         """Fetch recent error logs from the logs directory"""
         if logs_dir is None:
@@ -168,26 +193,13 @@ class CollectorAgent(BaseAgent):
         
         log_snippets = {}
         try:
-            # Get a list of log files, sorted by modification time (newest first)
-            log_files = []
-            for root, _, files in os.walk(logs_dir):
-                for file in files:
-                    if file.endswith('.log'):
-                        full_path = os.path.join(root, file)
-                        log_files.append((full_path, os.path.getmtime(full_path)))
-            
-            # Sort by modification time, newest first
-            log_files.sort(key=lambda x: x[1], reverse=True)
+            # Get sorted log files
+            log_files = self._get_log_files(logs_dir)
             
             # Extract error lines from the most recent logs (limit to 5 files)
             for log_path, _ in log_files[:5]:
                 log_name = os.path.basename(log_path)
-                error_lines = []
-                
-                with open(log_path, 'r', encoding='utf-8') as f:
-                    for line in f:
-                        if 'ERROR' in line or 'CRITICAL' in line:
-                            error_lines.append(line.strip())
+                error_lines = self._extract_error_lines(log_path)
                 
                 # Only include logs with errors, limited to most recent 10 errors
                 if error_lines:
@@ -281,12 +293,8 @@ class CollectorAgent(BaseAgent):
         logger.info(f"Completed data collection (est. {total_tokens} tokens)")
         return self.results
     
-    def generate_context_document(self, output_path: str = None) -> str:
-        """Generate a markdown document from the collected context"""
-        if not self.results:
-            logger.error("No results available. Run the agent first.")
-            return ""
-        
+    def _generate_header_section(self) -> str:
+        """Generate the header section of the context document"""
         context_md = "# AI Context Primer\n\n"
         context_md += f"*Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*\n\n"
         
@@ -296,49 +304,83 @@ class CollectorAgent(BaseAgent):
             if self.task_id:
                 context_md += f"Task ID: {self.task_id}\n\n"
         
-        # Add README content
-        context_md += "## Project Overview\n\n"
-        context_md += self.results["readme"] + "\n\n"
-        
-        # Add recent commit history
-        context_md += "## Recent Commits\n\n"
+        return context_md
+    
+    def _generate_readme_section(self) -> str:
+        """Generate the README section of the context document"""
+        section = "## Project Overview\n\n"
+        section += self.results["readme"] + "\n\n"
+        return section
+    
+    def _generate_commits_section(self) -> str:
+        """Generate the commits section of the context document"""
+        section = "## Recent Commits\n\n"
         for commit in self.results["recent_commits"]:
-            context_md += f"- [{commit['sha']}] {commit['message']} - *{commit['author']}* on {commit['date'].split('T')[0]}\n"
-        context_md += "\n"
-        
-        # Add issues
-        context_md += "## Open Issues\n\n"
+            section += f"- [{commit['sha']}] {commit['message']} - *{commit['author']}* on {commit['date'].split('T')[0]}\n"
+        section += "\n"
+        return section
+    
+    def _generate_issues_section(self) -> str:
+        """Generate the issues section of the context document"""
+        section = "## Open Issues\n\n"
         for issue in self.results["open_issues"]:
             labels_str = ", ".join([f"`{label}`" for label in issue['labels']]) if issue['labels'] else ""
-            context_md += f"- #{issue['number']} [{issue['title']}]({issue['url']}) {labels_str}\n"
-        context_md += "\n"
+            section += f"- #{issue['number']} [{issue['title']}]({issue['url']}) {labels_str}\n"
+        section += "\n"
         
-        context_md += "## Recently Closed Issues\n\n"
+        section += "## Recently Closed Issues\n\n"
         for issue in self.results["closed_issues"]:
             labels_str = ", ".join([f"`{label}`" for label in issue['labels']]) if issue['labels'] else ""
-            context_md += f"- #{issue['number']} [{issue['title']}]({issue['url']}) {labels_str}\n"
-        context_md += "\n"
+            section += f"- #{issue['number']} [{issue['title']}]({issue['url']}) {labels_str}\n"
+        section += "\n"
         
-        # Add error logs if any
+        return section
+    
+    def _generate_errors_section(self) -> str:
+        """Generate the errors section of the context document"""
+        section = ""
         if self.results["error_logs"]:
-            context_md += "## Recent Errors\n\n"
+            section += "## Recent Errors\n\n"
             for log_file, errors in self.results["error_logs"].items():
-                context_md += f"### {log_file}\n\n```\n{errors}\n```\n\n"
+                section += f"### {log_file}\n\n```\n{errors}\n```\n\n"
+        return section
+    
+    def _generate_structure_section(self) -> str:
+        """Generate the project structure section of the context document"""
+        section = "## Project Structure\n\n```\n"
+        section += json.dumps(self.results["project_structure"], indent=2)
+        section += "\n```\n"
+        return section
+    
+    def _save_to_file(self, content: str, output_path: str) -> bool:
+        """Save content to a file"""
+        try:
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            logger.info(f"Context document saved to {output_path}")
+            return True
+        except Exception as e:
+            logger.error(f"Error saving context document: {e}")
+            return False
+    
+    def generate_context_document(self, output_path: str = None) -> str:
+        """Generate a markdown document from the collected context"""
+        if not self.results:
+            logger.error("No results available. Run the agent first.")
+            return ""
         
-        # Add project structure
-        context_md += "## Project Structure\n\n```\n"
-        context_md += json.dumps(self.results["project_structure"], indent=2)
-        context_md += "\n```\n"
+        # Build the document by combining all sections
+        context_md = self._generate_header_section()
+        context_md += self._generate_readme_section()
+        context_md += self._generate_commits_section()
+        context_md += self._generate_issues_section()
+        context_md += self._generate_errors_section()
+        context_md += self._generate_structure_section()
         
         # Save to file if output path is provided
         if output_path:
-            try:
-                os.makedirs(os.path.dirname(output_path), exist_ok=True)
-                with open(output_path, 'w', encoding='utf-8') as f:
-                    f.write(context_md)
-                logger.info(f"Context document saved to {output_path}")
-            except Exception as e:
-                logger.error(f"Error saving context document: {e}")
+            self._save_to_file(context_md, output_path)
         
         return context_md
 
@@ -731,7 +773,7 @@ async def run_collector_agent(task_id: str = None, task_title: str = None, outpu
     results = await agent.run()
     
     if output_file:
-        context_md = agent.generate_context_document(output_file)
+        agent.generate_context_document(output_file)
         logger.info(f"Saved context document to {output_file}")
     
     return results
@@ -756,62 +798,73 @@ async def run_executor_agent(task_type: str, task_id: str, task_title: str,
     return results
 
 
+def print_usage():
+    """Print usage instructions for the CLI"""
+    print("Usage:")
+    print("  ai_agents.py collect [task_id] [task_title] [output_file]")
+    print("  ai_agents.py execute <task_type> <task_id> <task_title> [output_dir]")
+
+async def handle_collect_command(args):
+    """Handle the 'collect' command"""
+    task_id = args[0] if len(args) > 0 else None
+    task_title = args[1] if len(args) > 1 else None
+    output_file = args[2] if len(args) > 2 else os.path.join("docs", "context_priming.md")
+    
+    print(f"Running collector agent for task: {task_title or 'General collection'}")
+    results = await run_collector_agent(task_id, task_title, output_file)
+    
+    if "error" in results:
+        print(f"Error: {results['error']}")
+        sys.exit(1)
+    else:
+        print(f"Successfully collected context data and saved to {output_file}")
+
+async def handle_execute_command(args):
+    """Handle the 'execute' command"""
+    if len(args) < 3:
+        print("Usage: ai_agents.py execute <task_type> <task_id> <task_title> [output_dir]")
+        print("Task types: code_generation, improvement_recommendations")
+        sys.exit(1)
+    
+    task_type = args[0]
+    task_id = args[1]
+    task_title = args[2]
+    output_dir = args[3] if len(args) > 3 else os.path.join("docs", "ai_output")
+    
+    print(f"Running executor agent for task #{task_id}: {task_title}")
+    
+    # First collect context
+    context = await run_collector_agent(task_id, task_title)
+    if "error" in context:
+        print(f"Warning: Could not collect context: {context['error']}")
+        context = {}
+    
+    # Then execute the task
+    results = await run_executor_agent(task_type, str(task_id), task_title, context, None, output_dir)
+    
+    if "error" in results:
+        print(f"Error: {results['error']}")
+        sys.exit(1)
+    else:
+        print(f"Successfully executed {task_type} task")
+        if "saved_files" in results:
+            print("Generated files:")
+            for file in results["saved_files"]:
+                print(f"  - {file}")
+
 async def main():
     """Main function for CLI operation"""
     if len(sys.argv) < 2:
-        print("Usage:")
-        print("  ai_agents.py collect [task_id] [task_title] [output_file]")
-        print("  ai_agents.py execute <task_type> <task_id> <task_title> [output_dir]")
+        print_usage()
         sys.exit(1)
     
     command = sys.argv[1]
+    command_args = sys.argv[2:]
     
     if command == "collect":
-        task_id = sys.argv[2] if len(sys.argv) > 2 else None
-        task_title = sys.argv[3] if len(sys.argv) > 3 else None
-        output_file = sys.argv[4] if len(sys.argv) > 4 else os.path.join("docs", "context_priming.md")
-        
-        print(f"Running collector agent for task: {task_title or 'General collection'}")
-        results = await run_collector_agent(task_id, task_title, output_file)
-        
-        if "error" in results:
-            print(f"Error: {results['error']}")
-            sys.exit(1)
-        else:
-            print(f"Successfully collected context data and saved to {output_file}")
-    
+        await handle_collect_command(command_args)
     elif command == "execute":
-        if len(sys.argv) < 5:
-            print("Usage: ai_agents.py execute <task_type> <task_id> <task_title> [output_dir]")
-            print("Task types: code_generation, improvement_recommendations")
-            sys.exit(1)
-        
-        task_type = sys.argv[2]
-        task_id = sys.argv[3]
-        task_title = sys.argv[4]
-        output_dir = sys.argv[5] if len(sys.argv) > 5 else os.path.join("docs", "ai_output")
-        
-        print(f"Running executor agent for task #{task_id}: {task_title}")
-        
-        # First collect context
-        context = await run_collector_agent(task_id, task_title)
-        if "error" in context:
-            print(f"Warning: Could not collect context: {context['error']}")
-            context = {}
-        
-        # Then execute the task
-        results = await run_executor_agent(task_type, task_id, task_title, context, None, output_dir)
-        
-        if "error" in results:
-            print(f"Error: {results['error']}")
-            sys.exit(1)
-        else:
-            print(f"Successfully executed {task_type} task")
-            if "saved_files" in results:
-                print("Generated files:")
-                for file in results["saved_files"]:
-                    print(f"  - {file}")
-    
+        await handle_execute_command(command_args)
     else:
         print(f"Unknown command: {command}")
         print("Available commands: collect, execute")

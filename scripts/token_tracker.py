@@ -236,96 +236,117 @@ class TokenTracker:
         
         return all_recommendations
 
+def print_usage():
+    """Print usage instructions for the CLI"""
+    print("Usage:")
+    print("  token_tracker.py log <task_id> <task_title> <api_name> <prompt_tokens> <completion_tokens> [notes]")
+    print("  token_tracker.py report [month|task <task_id>|tips]")
+
+def handle_log_command(tracker, args):
+    """Handle the 'log' command"""
+    if len(args) < 5:
+        print("Missing arguments for log command.")
+        print("Usage: token_tracker.py log <task_id> <task_title> <api_name> <prompt_tokens> <completion_tokens> [notes]")
+        sys.exit(1)
+    
+    task_id = args[0]
+    task_title = args[1]
+    api_name = args[2]
+    
+    try:
+        prompt_tokens = int(args[3])
+        completion_tokens = int(args[4])
+    except ValueError:
+        print("Token counts must be integers.")
+        sys.exit(1)
+    
+    notes = args[5] if len(args) > 5 else ""
+    
+    result = tracker.log_token_usage(
+        task_id=task_id,
+        task_title=task_title,
+        api_name=api_name,
+        endpoint="completion",
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        notes=notes
+    )
+    
+    print(f"Logged {result['total_tokens']} tokens (${result['estimated_cost']:.6f}):")
+    print(f"  - Prompt tokens: {result['prompt_tokens']}")
+    print(f"  - Completion tokens: {result['completion_tokens']}")
+
+def handle_month_report(tracker, args):
+    """Handle the 'report month' command"""
+    month = args[0] if args else None
+    report = tracker.get_monthly_report(month)
+    
+    if report:
+        print(f"Token Usage Report for {report['month']}:")
+        print(f"  - Total tokens: {report['total_tokens']}")
+        print(f"  - Total cost: ${report['total_cost']:.4f}")
+        print(f"  - Total queries: {report['query_count']}")
+        print(f"  - Average tokens per query: {report['avg_tokens_per_query']:.1f}")
+    else:
+        print("No data available for the specified month.")
+
+def handle_task_report(tracker, args):
+    """Handle the 'report task' command"""
+    if not args:
+        print("Missing task ID.")
+        print("Usage: token_tracker.py report task <task_id>")
+        sys.exit(1)
+        
+    task_id = args[0]
+    report = tracker.get_task_report(task_id)
+    
+    if report:
+        print(f"Token Usage Report for Task #{report['task_id']} ({report['title']}):")
+        print(f"  - Total tokens: {report['total_tokens']}")
+        print(f"  - Total cost: ${report['total_cost']:.4f}")
+        print(f"  - Total queries: {report['query_count']}")
+        print(f"  - Average tokens per query: {report['avg_tokens_per_query']:.1f}")
+    else:
+        print(f"No data available for task {task_id}.")
+
+def handle_tips_report(tracker):
+    """Handle the 'report tips' command"""
+    recommendations = tracker.get_token_saving_recommendations()
+    print("Token Saving Recommendations:")
+    for i, tip in enumerate(recommendations, 1):
+        print(f"{i}. {tip}")
+
+def handle_report_command(tracker, args):
+    """Handle the 'report' command"""
+    report_type = args[0] if args else "month"
+    remaining_args = args[1:]
+    
+    if report_type == "month":
+        handle_month_report(tracker, remaining_args)
+    elif report_type == "task":
+        handle_task_report(tracker, remaining_args)
+    elif report_type == "tips":
+        handle_tips_report(tracker)
+    else:
+        print(f"Unknown report type: {report_type}")
+        print("Available report types: month, task, tips")
+
 def main():
     """Main function for CLI token tracking."""
     tracker = TokenTracker()
     
     # Parse command line arguments
     if len(sys.argv) < 2:
-        print("Usage:")
-        print("  token_tracker.py log <task_id> <task_title> <api_name> <prompt_tokens> <completion_tokens> [notes]")
-        print("  token_tracker.py report [month|task <task_id>|tips]")
+        print_usage()
         sys.exit(1)
     
     command = sys.argv[1]
+    command_args = sys.argv[2:]
     
     if command == "log":
-        if len(sys.argv) < 7:
-            print("Missing arguments for log command.")
-            print("Usage: token_tracker.py log <task_id> <task_title> <api_name> <prompt_tokens> <completion_tokens> [notes]")
-            sys.exit(1)
-        
-        task_id = sys.argv[2]
-        task_title = sys.argv[3]
-        api_name = sys.argv[4]
-        
-        try:
-            prompt_tokens = int(sys.argv[5])
-            completion_tokens = int(sys.argv[6])
-        except ValueError:
-            print("Token counts must be integers.")
-            sys.exit(1)
-        
-        notes = sys.argv[7] if len(sys.argv) > 7 else ""
-        
-        result = tracker.log_token_usage(
-            task_id=task_id,
-            task_title=task_title,
-            api_name=api_name,
-            endpoint="completion",
-            prompt_tokens=prompt_tokens,
-            completion_tokens=completion_tokens,
-            notes=notes
-        )
-        
-        print(f"Logged {result['total_tokens']} tokens (${result['estimated_cost']:.6f}):")
-        print(f"  - Prompt tokens: {result['prompt_tokens']}")
-        print(f"  - Completion tokens: {result['completion_tokens']}")
-        
+        handle_log_command(tracker, command_args)
     elif command == "report":
-        report_type = sys.argv[2] if len(sys.argv) > 2 else "month"
-        
-        if report_type == "month":
-            month = sys.argv[3] if len(sys.argv) > 3 else None
-            report = tracker.get_monthly_report(month)
-            
-            if report:
-                print(f"Token Usage Report for {report['month']}:")
-                print(f"  - Total tokens: {report['total_tokens']}")
-                print(f"  - Total cost: ${report['total_cost']:.4f}")
-                print(f"  - Total queries: {report['query_count']}")
-                print(f"  - Average tokens per query: {report['avg_tokens_per_query']:.1f}")
-            else:
-                print("No data available for the specified month.")
-        
-        elif report_type == "task":
-            if len(sys.argv) < 4:
-                print("Missing task ID.")
-                print("Usage: token_tracker.py report task <task_id>")
-                sys.exit(1)
-                
-            task_id = sys.argv[3]
-            report = tracker.get_task_report(task_id)
-            
-            if report:
-                print(f"Token Usage Report for Task #{report['task_id']} ({report['title']}):")
-                print(f"  - Total tokens: {report['total_tokens']}")
-                print(f"  - Total cost: ${report['total_cost']:.4f}")
-                print(f"  - Total queries: {report['query_count']}")
-                print(f"  - Average tokens per query: {report['avg_tokens_per_query']:.1f}")
-            else:
-                print(f"No data available for task {task_id}.")
-        
-        elif report_type == "tips":
-            recommendations = tracker.get_token_saving_recommendations()
-            print("Token Saving Recommendations:")
-            for i, tip in enumerate(recommendations, 1):
-                print(f"{i}. {tip}")
-        
-        else:
-            print(f"Unknown report type: {report_type}")
-            print("Available report types: month, task, tips")
-    
+        handle_report_command(tracker, command_args)
     else:
         print(f"Unknown command: {command}")
         print("Available commands: log, report")

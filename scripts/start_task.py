@@ -16,6 +16,9 @@ from scripts.task_logger import setup_logger
 from scripts.token_tracker import TokenTracker
 from scripts import ai_agents
 
+# Constants
+GITHUB_API_ACCEPT_HEADER = 'application/vnd.github.v3+json'
+
 # Set up logger
 logger = setup_logger('start_task')
 
@@ -99,7 +102,7 @@ async def find_similar_issues(title, config, similarity_threshold=0.7):
     """Find issues with similar titles using fuzzy matching."""
     headers = {
         'Authorization': f'token {config["token"]}',
-        'Accept': 'application/vnd.github.v3+json'
+        'Accept': GITHUB_API_ACCEPT_HEADER
     }
     
     # Extract tokens from the query title
@@ -178,15 +181,10 @@ async def find_similar_issues(title, config, similarity_threshold=0.7):
             logger.error(f"Error searching for similar issues: {e}")
             return None, None, []
 
-async def create_github_issue(title, config, related_issues=None):
-    """Create a GitHub issue using the API with async HTTP."""
-    headers = {
-        'Authorization': f'token {config["token"]}',
-        'Accept': 'application/vnd.github.v3+json'
-    }
-    
+def _create_issue_template(related_issues=None):
+    """Create the issue template with optional related issues section"""
     # Base issue template
-    issue_template = f"""## Task Description
+    issue_template = """## Task Description
 [Add detailed description here]
 
 ## Acceptance Criteria
@@ -194,15 +192,10 @@ async def create_github_issue(title, config, related_issues=None):
 - [ ] Criteria 2
 
 """
-
+    
     # Add related issues section if available
     if related_issues and len(related_issues) > 0:
-        issue_template += "## Related Issues\n"
-        for issue in related_issues[:5]:  # Limit to top 5 most relevant issues
-            status_icon = "🟢" if issue['state'] == 'open' else "🔴"
-            similarity_pct = f"{issue['similarity'] * 100:.0f}%" if 'similarity' in issue else f"{issue.get('relevance', 0) * 100:.0f}%"
-            issue_template += f"- {status_icon} #{issue['number']} [{issue['title']}]({issue['url']}) (Similarity: {similarity_pct})\n"
-        issue_template += "\n"
+        issue_template += _format_related_issues(related_issues)
     
     # Add standard footer
     issue_template += f"""## Additional Notes
@@ -211,6 +204,49 @@ async def create_github_issue(title, config, related_issues=None):
 - AI context priming available in docs/context_priming.md
 - AI-generated code snippets available in docs/ai_output/
 """
+    
+    return issue_template
+
+def _format_related_issues(related_issues):
+    """Format the related issues section of the template"""
+    section = "## Related Issues\n"
+    # Limit to top 5 most relevant issues
+    for issue in related_issues[:5]:
+        status_icon = "🟢" if issue['state'] == 'open' else "🔴"
+        similarity_pct = f"{issue['similarity'] * 100:.0f}%" if 'similarity' in issue else f"{issue.get('relevance', 0) * 100:.0f}%"
+        section += f"- {status_icon} #{issue['number']} [{issue['title']}]({issue['url']}) (Similarity: {similarity_pct})\n"
+    section += "\n"
+    return section
+
+async def _make_github_request(client, url, headers, data, title):
+    """Make a GitHub API request with retry logic"""
+    for attempt in range(3):  # Max 3 retries
+        try:
+            logger.debug(f"Attempting to create GitHub issue: {title}")
+            response = await client.post(url, headers=headers, json=data)
+            response.raise_for_status()
+            issue = response.json()
+            logger.info(f"Successfully created GitHub issue #{issue['number']}")
+            return issue['number'], issue['html_url']
+        except httpx.HTTPStatusError as e:
+            logger.warning(f"Attempt {attempt + 1}/3 failed: {e}")
+            if attempt < 2:  # Only retry if we haven't done 3 attempts yet
+                wait_time = 2 ** attempt  # Exponential backoff: 1, 2, 4 seconds
+                logger.info(f"Retrying in {wait_time} seconds...")
+                await asyncio.sleep(wait_time)
+            else:
+                logger.error("Failed to create GitHub issue after 3 attempts")
+                return None, None
+
+async def create_github_issue(title, config, related_issues=None):
+    """Create a GitHub issue using the API with async HTTP."""
+    headers = {
+        'Authorization': f'token {config["token"]}',
+        'Accept': GITHUB_API_ACCEPT_HEADER
+    }
+    
+    # Create issue template
+    issue_template = _create_issue_template(related_issues)
     
     data = {
         'title': title,
@@ -221,29 +257,13 @@ async def create_github_issue(title, config, related_issues=None):
     url = f"https://api.github.com/repos/{config['owner']}/{config['repo']}/issues"
     
     async with httpx.AsyncClient() as client:
-        for attempt in range(3):  # Max 3 retries
-            try:
-                logger.debug(f"Attempting to create GitHub issue: {title}")
-                response = await client.post(url, headers=headers, json=data)
-                response.raise_for_status()
-                issue = response.json()
-                logger.info(f"Successfully created GitHub issue #{issue['number']}")
-                return issue['number'], issue['html_url']
-            except httpx.HTTPStatusError as e:
-                logger.warning(f"Attempt {attempt + 1}/3 failed: {e}")
-                if attempt < 2:  # Only retry if we haven't done 3 attempts yet
-                    wait_time = 2 ** attempt  # Exponential backoff: 1, 2, 4 seconds
-                    logger.info(f"Retrying in {wait_time} seconds...")
-                    await asyncio.sleep(wait_time)
-                else:
-                    logger.error(f"Failed to create GitHub issue after 3 attempts")
-                    return None, None
+        return await _make_github_request(client, url, headers, data, title)
 
 async def find_related_issues(task_title, config):
     """Find issues related to a given task title but not necessarily similar."""
     headers = {
         'Authorization': f'token {config["token"]}',
-        'Accept': 'application/vnd.github.v3+json'
+        'Accept': GITHUB_API_ACCEPT_HEADER
     }
     
     # Extract keywords from the task title
@@ -297,7 +317,7 @@ async def find_related_issues(task_title, config):
                 # Sort by relevance (highest first)
                 related_issues.sort(key=lambda x: x['relevance'], reverse=True)
             else:
-                logger.info(f"No related issues found with sufficient relevance")
+                logger.info("No related issues found with sufficient relevance")
                 
             return related_issues
             
@@ -355,138 +375,125 @@ async def generate_code_stubs(task_id, task_title, context_data):
         logger.error(f"Error generating code stubs: {e}")
         return None
 
-async def main():
-    if len(sys.argv) < 2:
-        logger.error("Missing required argument: task title")
-        print("Usage: start_task.py 'Task Title'")
-        sys.exit(1)
+async def handle_existing_issue(exact_match, exact_url):
+    """Handle the case where an exact match issue already exists"""
+    logger.warning(f"An issue with this title already exists: #{exact_match}")
+    print(f"Issue already exists with the same title: #{exact_match}")
+    print(f"URL: {exact_url}")
+    use_existing = input("Would you like to use this existing issue? (y/n): ").lower()
+    
+    if use_existing == 'y':
+        return exact_match, exact_url
+    else:
+        print("Exiting without creating a new issue.")
+        sys.exit(0)
 
-    task_title = sys.argv[1]
-    logger.info(f"Starting task: {task_title}")
+async def handle_similar_issues(similar_issues):
+    """Handle the case where similar issues are found"""
+    # Display similar issues
+    print("\nSimilar issues found:")
+    for i, issue in enumerate(similar_issues[:5], 1):  # Show top 5
+        status = "OPEN" if issue['state'] == 'open' else "CLOSED"
+        similarity_pct = f"{issue['similarity'] * 100:.0f}%"
+        print(f"{i}. #{issue['number']} [{status}] {issue['title']} (Similarity: {similarity_pct})")
     
-    # Load GitHub configuration
-    config = await load_config()
-    if not config:
-        logger.error("Failed to load configuration")
-        sys.exit(1)
+    print("\nOptions:")
+    print("0. Create a new issue")
+    for i in range(1, min(len(similar_issues[:5]) + 1, 6)):
+        print(f"{i}. Link to issue #{similar_issues[i-1]['number']}")
     
-    logger.debug("Configuration loaded successfully")
+    choice = input("\nChoose an option (0-5): ")
     
-    # Check for similar issues first using fuzzy matching
-    exact_match, exact_url, similar_issues = await find_similar_issues(task_title, config)
+    try:
+        choice_num = int(choice)
+        if 1 <= choice_num <= len(similar_issues[:5]):
+            # User chose to link to an existing issue
+            selected_issue = similar_issues[choice_num - 1]
+            issue_number = selected_issue['number']
+            issue_url = selected_issue['url']
+            print(f"Using existing issue #{issue_number}")
+            return issue_number, issue_url
+    except ValueError:
+        pass
     
-    issue_number = None
-    issue_url = None
+    # Default to creating a new issue
+    print("Creating a new issue...")
+    return None, None
+
+async def create_new_issue(task_title, config, similar_issues):
+    """Create a new issue with context collection and related issues"""
+    logger.info("Generating AI context and searching for related issues in parallel")
+    print("Generating AI context and searching for related issues in parallel...")
     
-    if exact_match:
-        logger.warning(f"An issue with this title already exists: #{exact_match}")
-        print(f"Issue already exists with the same title: #{exact_match}")
-        print(f"URL: {exact_url}")
-        use_existing = input("Would you like to use this existing issue? (y/n): ").lower()
-        
-        if use_existing == 'y':
-            issue_number = exact_match
-            issue_url = exact_url
-        else:
-            print("Exiting without creating a new issue.")
-            sys.exit(0)
-    elif similar_issues:
-        # Display similar issues
-        print("\nSimilar issues found:")
-        for i, issue in enumerate(similar_issues[:5], 1):  # Show top 5
-            status = "OPEN" if issue['state'] == 'open' else "CLOSED"
-            similarity_pct = f"{issue['similarity'] * 100:.0f}%"
-            print(f"{i}. #{issue['number']} [{status}] {issue['title']} (Similarity: {similarity_pct})")
-        
-        print("\nOptions:")
-        print("0. Create a new issue")
-        for i in range(1, min(len(similar_issues[:5]) + 1, 6)):
-            print(f"{i}. Link to issue #{similar_issues[i-1]['number']}")
-        
-        choice = input("\nChoose an option (0-5): ")
-        
-        try:
-            choice_num = int(choice)
-            if 1 <= choice_num <= len(similar_issues[:5]):
-                # User chose to link to an existing issue
-                selected_issue = similar_issues[choice_num - 1]
-                issue_number = selected_issue['number']
-                issue_url = selected_issue['url']
-                print(f"Using existing issue #{issue_number}")
-            else:
-                # User chose to create a new issue
-                print("Creating a new issue...")
-                # Continue to issue creation below
-        except ValueError:
-            # Default to creating a new issue if input is invalid
-            print("Invalid choice. Creating a new issue...")
+    # Gather all tasks simultaneously
+    context_task = collect_project_data(task_title)
+    related_issues_task = find_related_issues(task_title, config)
+    
+    # Wait for both to complete
+    context_file, context_data = await context_task
+    related_issues = await related_issues_task
+    
+    # Process results
+    all_issues = await combine_issues(similar_issues, related_issues)
+    
+    if context_file:
+        print(f"AI context primer generated: {context_file}")
+    else:
+        print("Warning: Failed to generate AI context primer")
+    
+    if all_issues:
+        print(f"Found {len(all_issues)} similar or related issues")
+    else:
+        print("No similar or related issues found")
+    
+    # Create GitHub issue with related issues included
+    issue_number, issue_url = await create_github_issue(task_title, config, all_issues)
     
     if not issue_number:
-        # Run context collection and issue search in parallel
-        logger.info(f"Generating AI context and searching for related issues in parallel")
-        print("Generating AI context and searching for related issues in parallel...")
-        
-        # Gather all tasks simultaneously
-        context_task = collect_project_data(task_title)
-        related_issues_task = find_related_issues(task_title, config)
-        
-        # Wait for both to complete
-        context_file, context_data = await context_task
-        related_issues = await related_issues_task
-        
-        # Combine similar and related issues, prioritizing similar ones
-        all_issues = similar_issues.copy() if similar_issues else []
-        
-        # Add related issues that aren't already in similar issues
-        if related_issues:
-            similar_numbers = {issue['number'] for issue in all_issues}
-            for issue in related_issues:
-                if issue['number'] not in similar_numbers:
-                    all_issues.append(issue)
-        
-        # Sort all issues by similarity/relevance (highest first)
-        all_issues.sort(key=lambda x: x.get('similarity', x.get('relevance', 0)), reverse=True)
-        
-        if context_file:
-            print(f"AI context primer generated: {context_file}")
-        else:
-            print("Warning: Failed to generate AI context primer")
-        
-        if all_issues:
-            print(f"Found {len(all_issues)} similar or related issues")
-        else:
-            print("No similar or related issues found")
-        
-        # Create GitHub issue with related issues included
-        issue_number, issue_url = await create_github_issue(task_title, config, all_issues)
-        
-        if not issue_number:
-            logger.error("Failed to create GitHub issue")
-            print("Failed to create GitHub issue. Please check the logs for details.")
-            sys.exit(1)
-        
-        # Generate code stubs in parallel
-        print("Generating AI code stubs and test templates...")
-        code_files = await generate_code_stubs(str(issue_number), task_title, context_data)
-        
-        if code_files:
-            print(f"Generated {len(code_files)} code files for the task")
-        else:
-            print("Note: No code files were generated")
+        logger.error("Failed to create GitHub issue")
+        print("Failed to create GitHub issue. Please check the logs for details.")
+        sys.exit(1)
     
-    if issue_number:
-        # Create local task file
-        task_filename = os.path.join("docs", "tasks", f"TASK-{issue_number}.md")
-        
-        # Get path to context primer file
-        context_primer_path = os.path.join("docs", "context_priming.md")
-        context_primer_rel_path = os.path.relpath(context_primer_path, os.path.dirname(task_filename))
-        
-        # Get path to AI output directory
-        ai_output_dir = os.path.join("docs", "ai_output")
-        ai_output_rel_path = os.path.relpath(ai_output_dir, os.path.dirname(task_filename))
-        
-        task_template = f"""# {task_title}
+    # Generate code stubs in parallel
+    print("Generating AI code stubs and test templates...")
+    code_files = await generate_code_stubs(str(issue_number), task_title, context_data)
+    
+    if code_files:
+        print(f"Generated {len(code_files)} code files for the task")
+    else:
+        print("Note: No code files were generated")
+    
+    return issue_number, issue_url
+
+async def combine_issues(similar_issues, related_issues):
+    """Combine similar and related issues, prioritizing similar ones"""
+    all_issues = similar_issues.copy() if similar_issues else []
+    
+    # Add related issues that aren't already in similar issues
+    if related_issues:
+        similar_numbers = {issue['number'] for issue in all_issues}
+        for issue in related_issues:
+            if issue['number'] not in similar_numbers:
+                all_issues.append(issue)
+    
+    # Sort all issues by similarity/relevance (highest first)
+    all_issues.sort(key=lambda x: x.get('similarity', x.get('relevance', 0)), reverse=True)
+    
+    return all_issues
+
+async def create_task_file(issue_number, issue_url, task_title):
+    """Create a local task file for the issue"""
+    task_filename = os.path.join("docs", "tasks", f"TASK-{issue_number}.md")
+    
+    # Get path to context primer file
+    context_primer_path = os.path.join("docs", "context_priming.md")
+    context_primer_rel_path = os.path.relpath(context_primer_path, os.path.dirname(task_filename))
+    
+    # Get path to AI output directory
+    ai_output_dir = os.path.join("docs", "ai_output")
+    ai_output_rel_path = os.path.relpath(ai_output_dir, os.path.dirname(task_filename))
+    
+    task_template = f"""# {task_title}
 
 ## Task Details
 - **Issue:** #{issue_number}
@@ -510,15 +517,56 @@ async def main():
 - Token usage is being tracked in logs/token_usage/
 - Run `python scripts/token_tracker.py report task {issue_number}` to view usage stats
 """
-        try:
-            os.makedirs(os.path.dirname(task_filename), exist_ok=True)
-            with open(task_filename, "w") as f:
-                f.write(task_template)
-            logger.info(f"Task file {task_filename} created successfully")
-            print(f"Task file {task_filename} created successfully.")
-        except Exception as e:
-            logger.error(f"Failed to create task file: {e}")
-            print(f"Error creating task file: {e}")
+    try:
+        os.makedirs(os.path.dirname(task_filename), exist_ok=True)
+        with open(task_filename, "w") as f:
+            f.write(task_template)
+        logger.info(f"Task file {task_filename} created successfully")
+        print(f"Task file {task_filename} created successfully.")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to create task file: {e}")
+        print(f"Error creating task file: {e}")
+        return False
+
+async def main():
+    if len(sys.argv) < 2:
+        logger.error("Missing required argument: task title")
+        print("Usage: start_task.py 'Task Title'")
+        sys.exit(1)
+
+    task_title = sys.argv[1]
+    logger.info(f"Starting task: {task_title}")
+    
+    # Load GitHub configuration
+    config = await load_config()
+    if not config:
+        logger.error("Failed to load configuration")
+        sys.exit(1)
+    
+    logger.debug("Configuration loaded successfully")
+    
+    # Check for similar issues first using fuzzy matching
+    exact_match, exact_url, similar_issues = await find_similar_issues(task_title, config)
+    
+    issue_number = None
+    issue_url = None
+    
+    # Handle different scenarios
+    if exact_match:
+        issue_number, issue_url = await handle_existing_issue(exact_match, exact_url)
+    elif similar_issues:
+        issue_number, issue_url = await handle_similar_issues(similar_issues)
+    
+    # Create new issue if needed
+    if not issue_number:
+        issue_number, issue_url = await create_new_issue(task_title, config, similar_issues)
+    
+    # Create task file
+    if issue_number:
+        success = await create_task_file(issue_number, issue_url, task_title)
+        if not success:
+            logger.error("Failed to create task file")
     else:
         logger.error("Failed to create or find GitHub issue")
         print("Failed to create GitHub issue. Please check the logs for details.")
