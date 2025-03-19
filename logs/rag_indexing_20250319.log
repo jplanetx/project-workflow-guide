@@ -1,0 +1,92 @@
+2025-03-19 00:04:54,238 - rag_indexer - INFO - Starting document indexing process...
+2025-03-19 00:04:54,238 - rag_indexer - INFO - Initializing embedding function
+2025-03-19 00:05:16,266 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-03-19 00:05:18,228 - rag_indexer - INFO - Initializing ChromaDB at C:\Projects\project-workflow-guide w git support\rag_agent\chroma_db
+2025-03-19 00:05:18,261 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2025-03-19 00:05:18,651 - rag_indexer - INFO - Scanning docs directory: C:\Projects\project-workflow-guide w git support\docs
+2025-03-19 00:05:18,756 - rag_indexer - INFO - Scanning scripts directory: C:\Projects\project-workflow-guide w git support\scripts
+2025-03-19 00:05:18,833 - rag_indexer - INFO - Scanning logs directory: C:\Projects\project-workflow-guide w git support\logs
+2025-03-19 00:05:18,860 - rag_indexer - INFO - Found 27 documents to index
+2025-03-19 00:05:18,864 - rag_indexer - INFO - Created 250 chunks from 27 documents
+2025-03-19 00:05:18,864 - rag_indexer - ERROR - Error indexing documents: At least one of ids, where, or where_document must be provided in delete.
+2025-03-19 00:05:29,582 - rag_indexer - INFO - Starting document indexing process...
+2025-03-19 00:05:29,582 - rag_indexer - INFO - Initializing embedding function
+2025-03-19 00:05:33,495 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-03-19 00:05:35,389 - rag_indexer - INFO - Initializing ChromaDB at C:\Projects\project-workflow-guide w git support\rag_agent\chroma_db
+2025-03-19 00:05:35,412 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2025-03-19 00:05:35,606 - rag_indexer - INFO - Scanning docs directory: C:\Projects\project-workflow-guide w git support\docs
+2025-03-19 00:05:35,608 - rag_indexer - INFO - Scanning scripts directory: C:\Projects\project-workflow-guide w git support\scripts
+2025-03-19 00:05:35,609 - rag_indexer - INFO - Scanning logs directory: C:\Projects\project-workflow-guide w git support\logs
+2025-03-19 00:05:35,618 - rag_indexer - INFO - Found 27 documents to index
+2025-03-19 00:05:35,621 - rag_indexer - INFO - Created 251 chunks from 27 documents
+2025-03-19 00:05:35,622 - rag_indexer - ERROR - Error indexing documents: Expected where to have exactly one operator, got {} in delete.
+2025-03-19 00:24:09,725 - rag_indexer - INFO - Starting document indexing process...
+2025-03-19 00:24:09,726 - rag_indexer - INFO - Initializing embedding function
+2025-03-19 00:24:29,609 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-03-19 00:24:31,406 - rag_indexer - INFO - Initializing ChromaDB at C:\Projects\project-workflow-guide w git support\rag_agent\chroma_db
+2025-03-19 00:24:31,438 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2025-03-19 00:24:31,759 - rag_indexer - INFO - Scanning docs directory: C:\Projects\project-workflow-guide w git support\docs
+2025-03-19 00:24:31,835 - rag_indexer - INFO - Scanning scripts directory: C:\Projects\project-workflow-guide w git support\scripts
+2025-03-19 00:24:31,910 - rag_indexer - INFO - Scanning logs directory: C:\Projects\project-workflow-guide w git support\logs
+2025-03-19 00:24:31,936 - rag_indexer - ERROR - Error indexing documents: Expected where value for $and or $or to be a list with at least two where expressions, got [{}] in delete.
+2025-03-19 00:27:27,878 - rag_indexer - INFO - Starting document indexing process...
+2025-03-19 00:27:27,878 - rag_indexer - INFO - Initializing embedding function
+2025-03-19 00:27:31,927 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-03-19 00:27:33,519 - rag_indexer - INFO - Initializing ChromaDB at C:\Projects\project-workflow-guide w git support\rag_agent\chroma_db
+2025-03-19 00:27:33,553 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2025-03-19 00:27:33,765 - rag_indexer - INFO - Scanning docs directory: C:\Projects\project-workflow-guide w git support\docs
+2025-03-19 00:27:33,769 - rag_indexer - INFO - Scanning scripts directory: C:\Projects\project-workflow-guide w git support\scripts
+2025-03-19 00:27:33,773 - rag_indexer - INFO - Scanning logs directory: C:\Projects\project-workflow-guide w git support\logs
+2025-03-19 00:27:33,787 - rag_indexer - ERROR - Error indexing documents: Expected where value for $and or $or to be a list with at least two where expressions, got [{}] in delete.
+2025-03-19 00:33:25,138 - rag_indexer - INFO - Starting document indexing process...
+2025-03-19 00:33:25,139 - rag_indexer - INFO - Initializing embedding function
+2025-03-19 00:33:54,340 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-03-19 00:34:01,729 - rag_indexer - INFO - Initializing ChromaDB at C:\Projects\project-workflow-guide w git support\rag_agent\chroma_db
+2025-03-19 00:34:01,759 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2025-03-19 00:34:02,129 - rag_indexer - INFO - Scanning docs directory: C:\Projects\project-workflow-guide w git support\docs
+2025-03-19 00:34:02,236 - rag_indexer - INFO - Scanning scripts directory: C:\Projects\project-workflow-guide w git support\scripts
+2025-03-19 00:34:02,320 - rag_indexer - INFO - Scanning logs directory: C:\Projects\project-workflow-guide w git support\logs
+2025-03-19 00:34:02,364 - rag_indexer - ERROR - Error indexing documents: At least one of ids, where, or where_document must be provided in delete.
+2025-03-19 00:58:50,523 - rag_indexer - INFO - Starting document indexing process...
+2025-03-19 00:58:50,523 - rag_indexer - INFO - Initializing embedding function
+2025-03-19 00:59:12,885 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-03-19 00:59:14,551 - rag_indexer - INFO - Initializing ChromaDB at C:\Projects\project-workflow-guide w git support\rag_agent\chroma_db
+2025-03-19 00:59:14,567 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2025-03-19 00:59:14,859 - rag_indexer - INFO - Scanning docs directory: C:\Projects\project-workflow-guide w git support\docs
+2025-03-19 00:59:14,929 - rag_indexer - INFO - Scanning scripts directory: C:\Projects\project-workflow-guide w git support\scripts
+2025-03-19 00:59:15,009 - rag_indexer - INFO - Scanning logs directory: C:\Projects\project-workflow-guide w git support\logs
+2025-03-19 01:30:06,393 - rag_indexer - INFO - Starting document indexing process...
+2025-03-19 01:30:06,393 - rag_indexer - INFO - Initializing embedding function
+2025-03-19 01:30:10,652 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-03-19 01:30:12,107 - rag_indexer - INFO - Initializing ChromaDB at C:\Projects\project-workflow-guide w git support\rag_agent\chroma_db
+2025-03-19 01:30:12,144 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2025-03-19 01:30:12,380 - rag_indexer - INFO - Scanning docs directory: C:\Projects\project-workflow-guide w git support\docs
+2025-03-19 01:30:12,387 - rag_indexer - INFO - Scanning scripts directory: C:\Projects\project-workflow-guide w git support\scripts
+2025-03-19 01:30:12,392 - rag_indexer - INFO - Scanning logs directory: C:\Projects\project-workflow-guide w git support\logs
+2025-03-19 01:30:12,406 - rag_indexer - ERROR - Error indexing documents: Expected where value for $and or $or to be a list with at least two where expressions, got [{}] in delete.
+2025-03-19 01:43:29,073 - rag_indexer - INFO - Starting document indexing process...
+2025-03-19 01:43:29,073 - rag_indexer - INFO - Initializing embedding function
+2025-03-19 01:43:32,438 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-03-19 01:43:33,848 - rag_indexer - INFO - Initializing ChromaDB at C:\Projects\project-workflow-guide w git support\rag_agent\chroma_db
+2025-03-19 01:43:33,873 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2025-03-19 01:43:34,072 - rag_indexer - INFO - Scanning docs directory: C:\Projects\project-workflow-guide w git support\docs
+2025-03-19 01:43:34,075 - rag_indexer - INFO - Scanning scripts directory: C:\Projects\project-workflow-guide w git support\scripts
+2025-03-19 01:43:34,076 - rag_indexer - INFO - Scanning logs directory: C:\Projects\project-workflow-guide w git support\logs
+2025-03-19 01:43:34,089 - rag_indexer - ERROR - Error indexing documents: At least one of ids, where, or where_document must be provided in delete.
+2025-03-19 01:44:59,103 - rag_indexer - INFO - Starting document indexing process...
+2025-03-19 01:44:59,103 - rag_indexer - INFO - Initializing embedding function
+2025-03-19 01:45:02,550 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-03-19 01:45:04,211 - rag_indexer - INFO - Initializing ChromaDB at C:\Projects\project-workflow-guide w git support\rag_agent\chroma_db
+2025-03-19 01:45:04,239 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2025-03-19 01:45:04,418 - rag_indexer - INFO - Scanning docs directory: C:\Projects\project-workflow-guide w git support\docs
+2025-03-19 01:45:04,420 - rag_indexer - INFO - Scanning scripts directory: C:\Projects\project-workflow-guide w git support\scripts
+2025-03-19 01:45:04,421 - rag_indexer - INFO - Scanning logs directory: C:\Projects\project-workflow-guide w git support\logs
+2025-03-19 01:45:04,458 - rag_indexer - ERROR - Error indexing documents: 'dict' object has no attribute 'text'
+2025-03-19 01:52:15,375 - rag_indexer - INFO - Starting document indexing process...
+2025-03-19 01:52:15,376 - rag_indexer - INFO - Initializing embedding function
+2025-03-19 01:52:21,370 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-03-19 01:52:23,184 - rag_indexer - INFO - Initializing ChromaDB at C:\Projects\project-workflow-guide w git support\rag_agent\chroma_db
+2025-03-19 01:52:23,207 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2025-03-19 01:52:23,364 - rag_indexer - INFO - Scanning docs directory: C:\Projects\project-workflow-guide w git support\docs
+2025-03-19 01:52:23,369 - rag_indexer - INFO - Scanning scripts directory: C:\Projects\project-workflow-guide w git support\scripts
+2025-03-19 01:52:23,373 - rag_indexer - INFO - Scanning logs directory: C:\Projects\project-workflow-guide w git support\logs

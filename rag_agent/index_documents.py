@@ -204,67 +204,48 @@ def main():
         print(f"Initializing ChromaDB at {CHROMA_DB_PATH}...")
         client = chromadb.PersistentClient(path=CHROMA_DB_PATH)
         
-        # Create or get collection
-        collection = client.get_or_create_collection(
+        # Delete the old collection and create a new one
+        client.delete_collection("project_knowledge")
+        collection = client.create_collection(
             name="project_knowledge",
-            embedding_function=ef,
-            metadata={"description": "Project workflow knowledge base"}
+            embedding_function=ef
         )
-        
-        # Gather documents
+
+        # Gather and process documents
         print("Gathering documents from project directories...")
         documents = gather_documents()
-        logger.info(f"Found {len(documents)} documents to index")
-        print(f"Found {len(documents)} documents to index")
+        chunks = chunk_documents(documents)
         
-        # Chunk documents
-        print("Chunking documents for better retrieval...")
-        chunked_docs = chunk_documents(documents)
-        logger.info(f"Created {len(chunked_docs)} chunks from {len(documents)} documents")
-        print(f"Created {len(chunked_docs)} chunks from {len(documents)} documents")
-        
-        # Clear existing documents (optional)
+        # Clear existing documents from the collection
         print("Clearing existing documents from the collection...")
-        collection.delete()
-        collection = client.get_or_create_collection(
-            name="project_knowledge",
-            embedding_function=ef,
-            metadata={"description": "Project workflow knowledge base"}
+        try:
+            # Try to get all document IDs first
+            result = collection.get()
+            if result and result['ids']:
+                # Delete all documents by their IDs
+                collection.delete(ids=result['ids'])
+                print(f"Deleted {len(result['ids'])} existing documents")
+            else:
+                print("No existing documents to delete")
+        except Exception as e:
+            # If collection is empty or doesn't exist yet, this is fine
+            print(f"Note: Could not retrieve existing documents: {e}")
+        
+        # Add chunks to collection
+        print(f"Adding {len(chunks)} chunks to the collection...")
+        collection.add(
+            documents=[chunk["content"] for chunk in chunks],
+            metadatas=[chunk["metadata"] for chunk in chunks],
+            ids=[f"chunk-{i}" for i in range(len(chunks))]
         )
         
-        # Add documents to ChromaDB
-        ids = [f"doc_{i}" for i in range(len(chunked_docs))]
-        texts = [doc["content"] for doc in chunked_docs]
-        metadatas = [doc["metadata"] for doc in chunked_docs]
-        
-        # Add in batches to avoid memory issues
-        batch_size = 100
-        total_batches = (len(ids) + batch_size - 1) // batch_size
-        
-        print(f"Adding {len(chunked_docs)} document chunks to ChromaDB in {total_batches} batches...")
-        for i in range(0, len(ids), batch_size):
-            end_idx = min(i + batch_size, len(ids))
-            batch_ids = ids[i:end_idx]
-            batch_texts = texts[i:end_idx]
-            batch_metadatas = metadatas[i:end_idx]
-            
-            print(f"Processing batch {(i // batch_size) + 1}/{total_batches}...")
-            collection.add(
-                ids=batch_ids,
-                documents=batch_texts,
-                metadatas=batch_metadatas
-            )
-            logger.info(f"Indexed batch of {len(batch_ids)} documents")
-        
-        logger.info(f"Successfully indexed {len(chunked_docs)} document chunks in ChromaDB")
-        print(f"✅ Successfully indexed {len(documents)} documents ({len(chunked_docs)} chunks) in ChromaDB.")
-        
+        print("✅ Successfully indexed all documents!")
+        return True
+
     except Exception as e:
-        logger.error(f"Error indexing documents: {e}")
-        print(f"❌ Error: {e}")
-        return 1
-    
-    return 0
+        logger.error(f"Error indexing documents: {str(e)}")
+        print(f"❌ Error: {str(e)}")
+        return False
 
 if __name__ == "__main__":
     sys.exit(main())

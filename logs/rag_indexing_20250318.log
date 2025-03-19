@@ -1,0 +1,22 @@
+2025-03-18 14:24:07,487 - rag_indexer - INFO - Starting document indexing process...
+2025-03-18 14:24:07,487 - rag_indexer - INFO - Initializing embedding function
+2025-03-18 14:24:26,304 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-03-18 14:24:36,890 - rag_indexer - INFO - Initializing ChromaDB at C:\Projects\project-workflow-guide w git support\rag_agent\chroma_db
+2025-03-18 14:24:36,923 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2025-03-18 14:24:37,352 - rag_indexer - INFO - Scanning docs directory: C:\Projects\project-workflow-guide w git support\docs
+2025-03-18 14:24:37,430 - rag_indexer - INFO - Scanning scripts directory: C:\Projects\project-workflow-guide w git support\scripts
+2025-03-18 14:24:37,461 - rag_indexer - INFO - Scanning logs directory: C:\Projects\project-workflow-guide w git support\logs
+2025-03-18 14:24:37,494 - rag_indexer - INFO - Found 27 documents to index
+2025-03-18 14:24:37,497 - rag_indexer - INFO - Created 248 chunks from 27 documents
+2025-03-18 14:24:37,498 - rag_indexer - ERROR - Error indexing documents: At least one of ids, where, or where_document must be provided in delete.
+2025-03-18 23:35:51,079 - rag_indexer - INFO - Starting document indexing process...
+2025-03-18 23:35:51,079 - rag_indexer - INFO - Initializing embedding function
+2025-03-18 23:35:58,820 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-03-18 23:36:00,462 - rag_indexer - INFO - Initializing ChromaDB at C:\Projects\project-workflow-guide w git support\rag_agent\chroma_db
+2025-03-18 23:36:00,487 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2025-03-18 23:36:00,713 - rag_indexer - INFO - Scanning docs directory: C:\Projects\project-workflow-guide w git support\docs
+2025-03-18 23:36:00,825 - rag_indexer - INFO - Scanning scripts directory: C:\Projects\project-workflow-guide w git support\scripts
+2025-03-18 23:36:00,910 - rag_indexer - INFO - Scanning logs directory: C:\Projects\project-workflow-guide w git support\logs
+2025-03-18 23:36:00,953 - rag_indexer - INFO - Found 27 documents to index
+2025-03-18 23:36:00,956 - rag_indexer - INFO - Created 249 chunks from 27 documents
+2025-03-18 23:36:00,957 - rag_indexer - ERROR - Error indexing documents: At least one of ids, where, or where_document must be provided in delete.
