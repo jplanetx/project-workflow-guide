@@ -90,3 +90,11 @@
 2025-03-19 01:52:23,364 - rag_indexer - INFO - Scanning docs directory: C:\Projects\project-workflow-guide w git support\docs
 2025-03-19 01:52:23,369 - rag_indexer - INFO - Scanning scripts directory: C:\Projects\project-workflow-guide w git support\scripts
 2025-03-19 01:52:23,373 - rag_indexer - INFO - Scanning logs directory: C:\Projects\project-workflow-guide w git support\logs
+2025-03-19 03:05:33,278 - rag_indexer - INFO - Starting document indexing process...
+2025-03-19 03:05:33,279 - rag_indexer - INFO - Initializing embedding function
+2025-03-19 03:05:55,979 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-03-19 03:06:08,196 - rag_indexer - INFO - Initializing ChromaDB at C:\Projects\project-workflow-guide w git support\rag_agent\chroma_db
+2025-03-19 03:06:08,233 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2025-03-19 03:06:08,615 - rag_indexer - INFO - Scanning docs directory: C:\Projects\project-workflow-guide w git support\docs
+2025-03-19 03:06:08,713 - rag_indexer - INFO - Scanning scripts directory: C:\Projects\project-workflow-guide w git support\scripts
+2025-03-19 03:06:08,717 - rag_indexer - INFO - Scanning logs directory: C:\Projects\project-workflow-guide w git support\logs

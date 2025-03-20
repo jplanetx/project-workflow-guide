@@ -19,3 +19,14 @@
 2025-03-19 01:52:59,832 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
 2025-03-19 01:53:01,529 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
 2025-03-19 01:53:01,643 - rag_query - INFO - ChromaDB initialized successfully
+2025-03-19 03:06:49,515 - rag_query - WARNING - OPENAI_API_KEY not found in environment. Responses will be generated without AI.
+2025-03-19 03:06:49,516 - rag_query - INFO - Initializing ChromaDB from C:\Projects\project-workflow-guide w git support\rag_agent\chroma_db
+2025-03-19 03:06:53,598 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-03-19 03:06:55,107 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2025-03-19 03:06:55,366 - rag_query - INFO - ChromaDB initialized successfully
+2025-03-19 03:12:19,462 - rag_chat - INFO - User query: wait do i need both venv files both venv and rag_venv?
+2025-03-19 03:12:19,465 - rag_query - INFO - Processing query: 'wait do i need both venv files both venv and rag_venv?'
+2025-03-19 03:12:19,465 - rag_query - INFO - Retrieving documents for query: 'wait do i need both venv files both venv and rag_venv?'
+2025-03-19 03:12:19,594 - rag_query - INFO - Retrieved 5 documents
+2025-03-19 03:12:19,595 - rag_query - WARNING - Generating response without AI due to missing API key
+2025-03-19 03:12:19,597 - rag_query - INFO - Query processed in 0.13 seconds
